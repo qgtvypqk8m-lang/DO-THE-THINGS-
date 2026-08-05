@@ -3,21 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bi-Weekly Planner</title>
-    <!-- Tailwind CSS for clean styling -->
+    <title>Bi-Weekly Master Planner</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         @media print {
             @page {
-                size: landscape;
+                size: letter landscape;
                 margin: 0;
             }
             body {
+                background: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                padding: 0 !important;
             }
             .no-print {
                 display: none !important;
+            }
+            .print-container {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0.25in !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
             }
         }
         input[type="checkbox"] {
@@ -26,46 +36,52 @@
             height: 1rem;
             cursor: pointer;
         }
+        /* Custom scrollbar for mobile usability */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen p-2 md:p-4 text-slate-800 font-sans">
+<body class="bg-slate-100 min-h-screen p-2 sm:p-4 text-slate-900 font-sans">
 
     <!-- Top Action Bar (Hidden on print) -->
-    <div class="no-print max-w-7xl mx-auto mb-4 flex flex-wrap justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-200">
-        <div class="flex items-center gap-3">
-            <span class="font-bold text-slate-700 text-sm">Select Period:</span>
-            <select id="periodSelector" class="border border-slate-300 rounded px-2 py-1 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500" onchange="changePeriod(this.value)">
-                <!-- Generated dynamically via JS -->
+    <div class="no-print max-w-[11in] mx-auto mb-3 flex flex-wrap justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-200 gap-2">
+        <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-700 text-sm">Period:</span>
+            <select id="periodSelector" class="border border-slate-300 rounded px-3 py-1 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 font-medium" onchange="changePeriod(this.value)">
+                <!-- Populated by JS -->
             </select>
         </div>
-        <div class="flex items-center gap-2 mt-2 sm:mt-0">
+        <div class="flex items-center gap-2">
             <button onclick="clearData()" class="px-3 py-1.5 text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 rounded hover:bg-rose-100 transition">Clear Data</button>
             <button onclick="window.print()" class="px-4 py-1.5 text-xs font-semibold bg-slate-800 text-white rounded hover:bg-slate-700 transition shadow">Print / Save PDF</button>
         </div>
     </div>
 
-    <!-- Main Printable Planner Sheet -->
-    <div class="max-w-[11in] mx-auto bg-white p-4 md:p-6 rounded-xl shadow-md border border-slate-200 print:shadow-none print:border-none print:p-0">
+    <!-- Main Printable Planner Sheet (Landscape Letter Aspect Ratio) -->
+    <div class="print-container max-w-[11in] mx-auto bg-white p-4 sm:p-5 rounded-xl shadow-md border border-slate-200">
         
         <!-- Header -->
-        <div class="flex justify-between items-end border-b border-slate-300 pb-2 mb-3">
-            <div>
-                <h1 id="periodTitle" class="text-lg md:text-xl font-bold text-slate-900 uppercase tracking-wide">P01 (JAN 05 - JAN 18)</h1>
-            </div>
-            <div class="text-xs text-slate-500 font-medium italic">
-                Daily Reset Habits, Tasks & Notes
-            </div>
+        <div class="flex justify-between items-end border-b border-slate-300 pb-1.5 mb-2">
+            <h1 id="periodTitle" class="text-base sm:text-lg font-bold text-slate-900 tracking-wide">P01 (JAN 05 - JAN 18)</h1>
+            <a href="#" id="indexLink" onclick="goToIndex(event)" class="no-print text-xs font-bold text-blue-600 hover:underline">⬅ Back to Index</a>
+            <div class="hidden print:block text-[10px] text-slate-500 font-medium italic">Bi-Weekly Master Planner</div>
         </div>
 
-        <!-- 2-Column Grid for Week 1 & Week 2 -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Side-by-Side Grid for Week 1 & Week 2 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
             
             <!-- ================= WEEK 1 ================= -->
-            <div class="flex flex-col border border-slate-300 rounded overflow-hidden">
-                <div class="bg-slate-800 text-white text-center font-bold text-xs py-1.5 tracking-wider">WEEK 1</div>
+            <div class="flex flex-col border border-slate-300 rounded overflow-hidden bg-white">
+                <div class="bg-slate-800 text-white text-center font-bold text-xs py-1 tracking-wider">WEEK 1</div>
                 
                 <!-- Day Headers -->
-                <div class="grid grid-cols-8 bg-slate-800 text-white text-[10px] font-bold text-center border-t border-slate-700">
+                <div class="grid grid-cols-8 bg-slate-800 text-white text-[9px] sm:text-[10px] font-bold text-center border-t border-slate-700">
                     <div class="p-1 flex items-center justify-center border-r border-slate-700">Reset Habit</div>
                     <div id="w1-d0" class="p-1 border-r border-slate-700 leading-tight">Mon<br>Jan 05</div>
                     <div id="w1-d1" class="p-1 border-r border-slate-700 leading-tight">Tue<br>Jan 06</div>
@@ -77,37 +93,31 @@
                 </div>
 
                 <!-- Reset Habits Rows -->
-                <div id="w1-habits" class="divide-y divide-slate-200">
-                    <!-- Populated by JS -->
-                </div>
+                <div id="w1-habits" class="divide-y divide-slate-200"></div>
 
                 <!-- DO THE THINGS SECTION -->
-                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 flex justify-between items-center text-[11px] font-bold text-slate-700">
+                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 flex justify-between items-center text-[10px] font-bold text-slate-700">
                     <span>** DO THE THINGS **</span>
-                    <span class="text-[10px]">Done?</span>
+                    <span class="text-[9px]">Done?</span>
                 </div>
-                <div class="px-2 py-0.5 bg-slate-50 border-b border-slate-200 text-[9px] text-slate-500 italic">
+                <div class="px-2 py-0.5 bg-slate-50 border-b border-slate-200 text-[8.5px] text-slate-500 italic">
                     Be SPECIFIC, provide DUE DATE // Yellow = SCHOOL // Blue = PERSONAL
                 </div>
-                <div id="w1-tasks" class="divide-y divide-dotted divide-slate-200 min-h-[120px]">
-                    <!-- Populated by JS -->
-                </div>
+                <div id="w1-tasks" class="divide-y divide-dotted divide-slate-200"></div>
 
                 <!-- NOTES SECTION -->
-                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 text-[11px] font-bold text-slate-700 text-center">
+                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 text-[10px] font-bold text-slate-700 text-center">
                     ** NOTES **
                 </div>
-                <div id="w1-notes" class="divide-y divide-dotted divide-slate-200 min-h-[90px]">
-                    <!-- Populated by JS -->
-                </div>
+                <div id="w1-notes" class="divide-y divide-dotted divide-slate-200"></div>
             </div>
 
             <!-- ================= WEEK 2 ================= -->
-            <div class="flex flex-col border border-slate-300 rounded overflow-hidden">
-                <div class="bg-slate-800 text-white text-center font-bold text-xs py-1.5 tracking-wider">WEEK 2</div>
+            <div class="flex flex-col border border-slate-300 rounded overflow-hidden bg-white">
+                <div class="bg-slate-800 text-white text-center font-bold text-xs py-1 tracking-wider">WEEK 2</div>
                 
                 <!-- Day Headers -->
-                <div class="grid grid-cols-8 bg-slate-800 text-white text-[10px] font-bold text-center border-t border-slate-700">
+                <div class="grid grid-cols-8 bg-slate-800 text-white text-[9px] sm:text-[10px] font-bold text-center border-t border-slate-700">
                     <div class="p-1 flex items-center justify-center border-r border-slate-700">Reset Habit</div>
                     <div id="w2-d0" class="p-1 border-r border-slate-700 leading-tight">Mon<br>Jan 12</div>
                     <div id="w2-d1" class="p-1 border-r border-slate-700 leading-tight">Tue<br>Jan 13</div>
@@ -119,31 +129,38 @@
                 </div>
 
                 <!-- Reset Habits Rows -->
-                <div id="w2-habits" class="divide-y divide-slate-200">
-                    <!-- Populated by JS -->
-                </div>
+                <div id="w2-habits" class="divide-y divide-slate-200"></div>
 
                 <!-- DO THE THINGS SECTION -->
-                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 flex justify-between items-center text-[11px] font-bold text-slate-700">
+                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 flex justify-between items-center text-[10px] font-bold text-slate-700">
                     <span>** DO THE THINGS **</span>
-                    <span class="text-[10px]">Done?</span>
+                    <span class="text-[9px]">Done?</span>
                 </div>
-                <div class="px-2 py-0.5 bg-slate-50 border-b border-slate-200 text-[9px] text-slate-500 italic">
+                <div class="px-2 py-0.5 bg-slate-50 border-b border-slate-200 text-[8.5px] text-slate-500 italic">
                     Be SPECIFIC, provide DUE DATE // Yellow = SCHOOL // Blue = PERSONAL
                 </div>
-                <div id="w2-tasks" class="divide-y divide-dotted divide-slate-200 min-h-[120px]">
-                    <!-- Populated by JS -->
-                </div>
+                <div id="w2-tasks" class="divide-y divide-dotted divide-slate-200"></div>
 
                 <!-- NOTES SECTION -->
-                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 text-[11px] font-bold text-slate-700 text-center">
+                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 text-[10px] font-bold text-slate-700 text-center">
                     ** NOTES **
                 </div>
-                <div id="w2-notes" class="divide-y divide-dotted divide-slate-200 min-h-[90px]">
-                    <!-- Populated by JS -->
-                </div>
+                <div id="w2-notes" class="divide-y divide-dotted divide-slate-200"></div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Master Index Modal / Overlay (Hidden by default) -->
+    <div id="indexModal" class="no-print hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex justify-center items-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+            <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center font-bold text-sm">
+                <span>2026 Master Planner Index</span>
+                <button onclick="toggleIndex(false)" class="text-slate-300 hover:text-white text-lg">&times;</button>
+            </div>
+            <div class="p-4 overflow-y-auto divide-y divide-slate-100" id="indexList">
+                <!-- Populated by JS -->
+            </div>
         </div>
     </div>
 
@@ -151,10 +168,9 @@
         const resetHabits = ["Sink reset", "No screens", "Dog AM", "Dog PM", "Desk 30-min"];
         const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-        // Generate 26 periods for 2026 starting Jan 5, 2026
         function generatePeriods() {
             let periods = [];
-            let startDate = new Date(2026, 0, 5); // Jan 5, 2026
+            let startDate = new Date(2026, 0, 5); // Jan 5, 2026 (Monday)
             
             for (let i = 1; i <= 26; i++) {
                 let w1Start = new Date(startDate);
@@ -199,7 +215,7 @@
         const periods = generatePeriods();
         let currentPeriodId = periods[0].id;
 
-        // Initialize Selector Dropdown
+        // Populate Selector Dropdown
         const selector = document.getElementById('periodSelector');
         periods.forEach(p => {
             let opt = document.createElement('option');
@@ -208,22 +224,33 @@
             selector.appendChild(opt);
         });
 
+        // Populate Index Modal List
+        const indexList = document.getElementById('indexList');
+        periods.forEach(p => {
+            let item = document.createElement('div');
+            item.className = 'py-2 px-3 flex justify-between items-center hover:bg-slate-50 rounded cursor-pointer transition';
+            item.innerHTML = `<span class="font-bold text-xs text-slate-800">Period ${p.id}</span><span class="text-xs text-slate-500">${p.name.split(' ')[1]} ${p.name.split(' ')[2]} ${p.name.split(' ')[3]}</span>`;
+            item.onclick = () => {
+                selector.value = p.id;
+                changePeriod(p.id);
+                toggleIndex(false);
+            };
+            indexList.appendChild(item);
+        });
+
         function renderPlanner(periodId) {
             currentPeriodId = periodId;
+            selector.value = periodId;
             const period = periods.find(p => p.id === periodId);
             document.getElementById('periodTitle').textContent = period.name;
 
-            // Render Day Headers
             for (let i = 0; i < 7; i++) {
                 document.getElementById(`w1-d${i}`).innerHTML = `${dayNames[i]}<br>${period.w1Dates[i]}`;
                 document.getElementById(`w2-d${i}`).innerHTML = `${dayNames[i]}<br>${period.w2Dates[i]}`;
             }
 
-            // Render Reset Habits
             renderHabits('w1', periodId);
             renderHabits('w2', periodId);
-
-            // Render Tasks & Notes Input Rows
             renderEditableRows('w1', 'tasks', 5, periodId);
             renderEditableRows('w1', 'notes', 4, periodId);
             renderEditableRows('w2', 'tasks', 5, periodId);
@@ -239,22 +266,19 @@
                 row.className = 'grid grid-cols-8 text-[11px] items-center bg-white';
                 
                 let label = document.createElement('div');
-                label.className = 'p-1.5 font-bold text-slate-700 bg-slate-50 border-r border-slate-200 truncate';
+                label.className = 'p-1.5 font-bold text-slate-700 bg-slate-50 border-r border-slate-200 truncate text-[10px]';
                 label.textContent = habit;
                 row.appendChild(label);
 
                 for (let d = 0; d < 7; d++) {
                     let cell = document.createElement('div');
-                    cell.className = 'p-1.5 flex justify-center items-center border-r border-slate-200 last:border-r-0';
+                    cell.className = 'p-1 flex justify-center items-center border-r border-slate-200 last:border-r-0 h-[26px]';
                     
                     let checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     let storageKey = `planner_${periodId}_${weekKey}_habit_${hIdx}_day_${d}`;
                     checkbox.checked = localStorage.getItem(storageKey) === 'true';
-                    
-                    checkbox.onchange = (e) => {
-                        localStorage.setItem(storageKey, e.target.checked);
-                    };
+                    checkbox.onchange = (e) => localStorage.setItem(storageKey, e.target.checked);
                     
                     cell.appendChild(checkbox);
                     row.appendChild(cell);
@@ -269,17 +293,14 @@
 
             for (let i = 0; i < count; i++) {
                 let row = document.createElement('div');
-                row.className = 'flex items-center px-2 py-1 bg-white h-[26px]';
+                row.className = 'flex items-center px-2 bg-white h-[26px]';
 
                 let input = document.createElement('input');
                 input.type = 'text';
                 input.className = 'flex-grow bg-transparent text-[11px] focus:outline-none text-slate-700';
                 let storageKey = `planner_${periodId}_${weekKey}_${sectionType}_${i}`;
                 input.value = localStorage.getItem(storageKey) || '';
-                
-                input.oninput = (e) => {
-                    localStorage.setItem(storageKey, e.target.value);
-                };
+                input.oninput = (e) => localStorage.setItem(storageKey, e.target.value);
                 row.appendChild(input);
 
                 if (sectionType === 'tasks') {
@@ -287,9 +308,7 @@
                     checkbox.type = 'checkbox';
                     let checkKey = `planner_${periodId}_${weekKey}_taskcheck_${i}`;
                     checkbox.checked = localStorage.getItem(checkKey) === 'true';
-                    checkbox.onchange = (e) => {
-                        localStorage.setItem(checkKey, e.target.checked);
-                    };
+                    checkbox.onchange = (e) => localStorage.setItem(checkKey, e.target.checked);
                     row.appendChild(checkbox);
                 }
 
@@ -299,6 +318,15 @@
 
         function changePeriod(periodId) {
             renderPlanner(periodId);
+        }
+
+        function toggleIndex(show) {
+            document.getElementById('indexModal').classList.toggle('hidden', !show);
+        }
+
+        function goToIndex(e) {
+            e.preventDefault();
+            toggleIndex(true);
         }
 
         function clearData() {
@@ -312,7 +340,7 @@
             }
         }
 
-        // Initial Load
+        // Initialize on load
         renderPlanner(periods[0].id);
     </script>
 </body>
