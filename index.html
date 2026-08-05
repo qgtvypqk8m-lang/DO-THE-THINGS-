@@ -3,218 +3,317 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drone Business Launch Roadmap</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Bi-Weekly Planner</title>
+    <!-- Tailwind CSS for clean styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        body {
-            background-color: #f3f4f6;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        .task-checkbox:checked + span {
-            text-decoration: line-through;
-            color: #9ca3af;
-        }
-        .week-card {
-            transition: transform 0.2s;
-        }
-        .week-card:hover {
-            transform: translateY(-2px);
-        }
-        .date-label {
-            min-width: 65px;
-        }
         @media print {
-            .no-print { display: none; }
-            body { background-color: white; padding: 0; }
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+        input[type="checkbox"] {
+            accent-color: #1f2937;
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-2xl mx-auto">
+<body class="bg-slate-100 min-h-screen p-2 md:p-4 text-slate-800 font-sans">
+
+    <!-- Top Action Bar (Hidden on print) -->
+    <div class="no-print max-w-7xl mx-auto mb-4 flex flex-wrap justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-200">
+        <div class="flex items-center gap-3">
+            <span class="font-bold text-slate-700 text-sm">Select Period:</span>
+            <select id="periodSelector" class="border border-slate-300 rounded px-2 py-1 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500" onchange="changePeriod(this.value)">
+                <!-- Generated dynamically via JS -->
+            </select>
+        </div>
+        <div class="flex items-center gap-2 mt-2 sm:mt-0">
+            <button onclick="clearData()" class="px-3 py-1.5 text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 rounded hover:bg-rose-100 transition">Clear Data</button>
+            <button onclick="window.print()" class="px-4 py-1.5 text-xs font-semibold bg-slate-800 text-white rounded hover:bg-slate-700 transition shadow">Print / Save PDF</button>
+        </div>
+    </div>
+
+    <!-- Main Printable Planner Sheet -->
+    <div class="max-w-[11in] mx-auto bg-white p-4 md:p-6 rounded-xl shadow-md border border-slate-200 print:shadow-none print:border-none print:p-0">
+        
         <!-- Header -->
-        <header class="bg-blue-600 text-white p-6 rounded-2xl shadow-lg mb-8">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h1 class="text-2xl font-bold">Drone Business Launch</h1>
-                    <p class="opacity-90">30-Min Morning Sessions (Mon-Thu)</p>
-                </div>
-                <div id="countdown" class="bg-blue-800 px-3 py-1 rounded-lg text-sm font-mono border border-blue-400">
-                    -- Days Left
-                </div>
+        <div class="flex justify-between items-end border-b border-slate-300 pb-2 mb-3">
+            <div>
+                <h1 id="periodTitle" class="text-lg md:text-xl font-bold text-slate-900 uppercase tracking-wide">P01 (JAN 05 - JAN 18)</h1>
             </div>
-            <div class="mt-4 bg-blue-500 p-3 rounded-xl flex justify-between items-center">
-                <span>Next Milestone:</span>
-                <span class="font-bold underline">June 20 - Purchase Day 🚁</span>
-            </div>
-        </header>
-
-        <!-- Debt-Killer Strategy Card -->
-        <div class="bg-amber-50 border-l-4 border-amber-400 p-6 rounded-2xl shadow-sm mb-8">
-            <h2 class="text-amber-800 font-bold uppercase tracking-wider text-sm mb-3">💰 Debt-Killer & Credit Strategy</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-amber-900">
-                <div class="flex items-start space-x-2">
-                    <span class="font-bold">1.</span>
-                    <span>Allocate 50% of every drone gig to personal debt.</span>
-                </div>
-                <div class="flex items-start space-x-2">
-                    <span class="font-bold">2.</span>
-                    <span>Use Net-30 Vendors (Quill/Uline) to build LLC credit.</span>
-                </div>
-                <div class="flex items-start space-x-2">
-                    <span class="font-bold">3.</span>
-                    <span>Apply for a Secured Business Card after 3 months.</span>
-                </div>
-                <div class="flex items-start space-x-2">
-                    <span class="font-bold">4.</span>
-                    <span>Build "Paydex" score to bypass personal 550 score.</span>
-                </div>
+            <div class="text-xs text-slate-500 font-medium italic">
+                Daily Reset Habits, Tasks & Notes
             </div>
         </div>
 
-        <!-- Week 1 -->
-        <div class="week-card bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-            <div class="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="font-bold text-gray-800">Week 1: The FAA Foundation</h2>
-                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-lg">Legal</span>
-            </div>
-            <div class="p-6 space-y-4">
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="1">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-blue-600">May 18:</b> Create FAA IACRA & get FTN number.</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="2">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-blue-600">May 19:</b> Study Airspace (B, C, D) & Sectional Colors.</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="3">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-blue-600">May 20:</b> Study Airspace (E, G) - Controlled vs Uncontrolled.</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="4">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-blue-600">May 21:</b> Check SkyVector for Auburn Hills (PTK Airport).</span>
-                </label>
-            </div>
-        </div>
+        <!-- 2-Column Grid for Week 1 & Week 2 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            <!-- ================= WEEK 1 ================= -->
+            <div class="flex flex-col border border-slate-300 rounded overflow-hidden">
+                <div class="bg-slate-800 text-white text-center font-bold text-xs py-1.5 tracking-wider">WEEK 1</div>
+                
+                <!-- Day Headers -->
+                <div class="grid grid-cols-8 bg-slate-800 text-white text-[10px] font-bold text-center border-t border-slate-700">
+                    <div class="p-1 flex items-center justify-center border-r border-slate-700">Reset Habit</div>
+                    <div id="w1-d0" class="p-1 border-r border-slate-700 leading-tight">Mon<br>Jan 05</div>
+                    <div id="w1-d1" class="p-1 border-r border-slate-700 leading-tight">Tue<br>Jan 06</div>
+                    <div id="w1-d2" class="p-1 border-r border-slate-700 leading-tight">Wed<br>Jan 07</div>
+                    <div id="w1-d3" class="p-1 border-r border-slate-700 leading-tight">Thu<br>Jan 08</div>
+                    <div id="w1-d4" class="p-1 border-r border-slate-700 leading-tight">Fri<br>Jan 09</div>
+                    <div id="w1-d5" class="p-1 border-r border-slate-700 leading-tight">Sat<br>Jan 10</div>
+                    <div id="w1-d6" class="p-1 leading-tight">Sun<br>Jan 11</div>
+                </div>
 
-        <!-- Week 2 -->
-        <div class="week-card bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-            <div class="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="font-bold text-gray-800">Week 2: Creative Eye & Admin</h2>
-                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-lg">Business</span>
-            </div>
-            <div class="p-6 space-y-4">
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="5">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-purple-600">May 25:</b> Rule of Thirds & Leading Lines study.</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="6">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-purple-600">May 26:</b> Golden Hour timing for Auburn Hills.</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="7">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-purple-600">May 27:</b> File Michigan LLC (LARA Website).</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="8">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-purple-600">May 28:</b> Apply for IRS EIN (Tax ID).</span>
-                </label>
-            </div>
-        </div>
+                <!-- Reset Habits Rows -->
+                <div id="w1-habits" class="divide-y divide-slate-200">
+                    <!-- Populated by JS -->
+                </div>
 
-        <!-- Week 3 -->
-        <div class="week-card bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-            <div class="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="font-bold text-gray-800">Week 3: Testing & Software</h2>
-                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg">Skill</span>
-            </div>
-            <div class="p-6 space-y-4">
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="9">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-green-600">June 01:</b> Decode METARs & TAFs (Aviation Weather).</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="10">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-green-600">June 02:</b> Take online Part 107 Practice Exam.</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="11">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-green-600">June 03:</b> BOOK THE EXAM (Target June 15-18).</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="12">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-green-600">June 04:</b> Install LightCut (Phone) & Resolve (PC).</span>
-                </label>
-            </div>
-        </div>
+                <!-- DO THE THINGS SECTION -->
+                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 flex justify-between items-center text-[11px] font-bold text-slate-700">
+                    <span>** DO THE THINGS **</span>
+                    <span class="text-[10px]">Done?</span>
+                </div>
+                <div class="px-2 py-0.5 bg-slate-50 border-b border-slate-200 text-[9px] text-slate-500 italic">
+                    Be SPECIFIC, provide DUE DATE // Yellow = SCHOOL // Blue = PERSONAL
+                </div>
+                <div id="w1-tasks" class="divide-y divide-dotted divide-slate-200 min-h-[120px]">
+                    <!-- Populated by JS -->
+                </div>
 
-        <!-- Week 4 -->
-        <div class="week-card bg-white rounded-2xl shadow-sm border border-gray-200 mb-12 overflow-hidden">
-            <div class="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="font-bold text-gray-800">Week 4: Marketing Strategy</h2>
-                <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-lg">Launch</span>
+                <!-- NOTES SECTION -->
+                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 text-[11px] font-bold text-slate-700 text-center">
+                    ** NOTES **
+                </div>
+                <div id="w1-notes" class="divide-y divide-dotted divide-slate-200 min-h-[90px]">
+                    <!-- Populated by JS -->
+                </div>
             </div>
-            <div class="p-6 space-y-4">
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="13">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-orange-600">June 08:</b> Finalize "Starter Price" (e.g., $125/10 photos).</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="14">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-orange-600">June 09:</b> List 10 Real Estate offices in Oakland Co.</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="15">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-orange-600">June 10:</b> Map 3 locations for first "Portfolio" shoots.</span>
-                </label>
-                <label class="flex items-start space-x-3 cursor-pointer">
-                    <input type="checkbox" class="task-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-task="16">
-                    <span class="text-gray-700 font-medium"><b class="date-label inline-block text-orange-600">June 11:</b> Setup Instagram & follow local realtors.</span>
-                </label>
-            </div>
-        </div>
 
-        <!-- Footer Card -->
-        <div class="bg-gray-800 text-white p-6 rounded-2xl shadow-lg mb-8 text-center no-print">
-            <p class="text-sm uppercase tracking-widest text-gray-400 mb-1">Upcoming</p>
-            <h3 class="text-xl font-bold mb-3">June 20: Purchase Day</h3>
-            <p class="text-sm text-gray-300 mb-4">Register on FAA DroneZone immediately after unboxing.</p>
-            <div class="flex justify-center space-x-4">
-                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition">Print This Page</button>
+            <!-- ================= WEEK 2 ================= -->
+            <div class="flex flex-col border border-slate-300 rounded overflow-hidden">
+                <div class="bg-slate-800 text-white text-center font-bold text-xs py-1.5 tracking-wider">WEEK 2</div>
+                
+                <!-- Day Headers -->
+                <div class="grid grid-cols-8 bg-slate-800 text-white text-[10px] font-bold text-center border-t border-slate-700">
+                    <div class="p-1 flex items-center justify-center border-r border-slate-700">Reset Habit</div>
+                    <div id="w2-d0" class="p-1 border-r border-slate-700 leading-tight">Mon<br>Jan 12</div>
+                    <div id="w2-d1" class="p-1 border-r border-slate-700 leading-tight">Tue<br>Jan 13</div>
+                    <div id="w2-d2" class="p-1 border-r border-slate-700 leading-tight">Wed<br>Jan 14</div>
+                    <div id="w2-d3" class="p-1 border-r border-slate-700 leading-tight">Thu<br>Jan 15</div>
+                    <div id="w2-d4" class="p-1 border-r border-slate-700 leading-tight">Fri<br>Jan 16</div>
+                    <div id="w2-d5" class="p-1 border-r border-slate-700 leading-tight">Sat<br>Jan 17</div>
+                    <div id="w2-d6" class="p-1 leading-tight">Sun<br>Jan 18</div>
+                </div>
+
+                <!-- Reset Habits Rows -->
+                <div id="w2-habits" class="divide-y divide-slate-200">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- DO THE THINGS SECTION -->
+                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 flex justify-between items-center text-[11px] font-bold text-slate-700">
+                    <span>** DO THE THINGS **</span>
+                    <span class="text-[10px]">Done?</span>
+                </div>
+                <div class="px-2 py-0.5 bg-slate-50 border-b border-slate-200 text-[9px] text-slate-500 italic">
+                    Be SPECIFIC, provide DUE DATE // Yellow = SCHOOL // Blue = PERSONAL
+                </div>
+                <div id="w2-tasks" class="divide-y divide-dotted divide-slate-200 min-h-[120px]">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- NOTES SECTION -->
+                <div class="bg-slate-100 border-t border-slate-300 px-2 py-1 text-[11px] font-bold text-slate-700 text-center">
+                    ** NOTES **
+                </div>
+                <div id="w2-notes" class="divide-y divide-dotted divide-slate-200 min-h-[90px]">
+                    <!-- Populated by JS -->
+                </div>
             </div>
+
         </div>
     </div>
 
     <script>
-        function updateCountdown() {
-            const purchaseDate = new Date('2026-06-20T00:00:00');
-            const now = new Date();
-            const diff = purchaseDate - now;
-            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-            const el = document.getElementById('countdown');
+        const resetHabits = ["Sink reset", "No screens", "Dog AM", "Dog PM", "Desk 30-min"];
+        const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+        // Generate 26 periods for 2026 starting Jan 5, 2026
+        function generatePeriods() {
+            let periods = [];
+            let startDate = new Date(2026, 0, 5); // Jan 5, 2026
             
-            if (days > 0) {
-                el.innerText = `${days} Days Left`;
-            } else if (days === 0) {
-                el.innerText = `TODAY IS THE DAY!`;
-            } else {
-                el.innerText = `Drone Launched!`;
+            for (let i = 1; i <= 26; i++) {
+                let w1Start = new Date(startDate);
+                let w2End = new Date(startDate);
+                w2End.setDate(w2End.getDate() + 13);
+                
+                let w1Dates = [];
+                let w2Dates = [];
+                
+                for (let d = 0; d < 7; d++) {
+                    let dt1 = new Date(w1Start);
+                    dt1.setDate(dt1.getDate() + d);
+                    w1Dates.push(formatDate(dt1));
+                    
+                    let dt2 = new Date(w1Start);
+                    dt2.setDate(dt2.getDate() + d + 7);
+                    w2Dates.push(formatDate(dt2));
+                }
+                
+                periods.push({
+                    id: `P${String(i).padStart(2, '0')}`,
+                    name: `P${String(i).padStart(2, '0')} (${formatMonthDay(w1Start).toUpperCase()} - ${formatMonthDay(w2End).toUpperCase()})`,
+                    w1Dates,
+                    w2Dates
+                });
+                
+                startDate.setDate(startDate.getDate() + 14);
+            }
+            return periods;
+        }
+
+        function formatDate(date) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatMonthDay(date) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            return `${months[date.getMonth()]} ${date.getDate()}`;
+        }
+
+        const periods = generatePeriods();
+        let currentPeriodId = periods[0].id;
+
+        // Initialize Selector Dropdown
+        const selector = document.getElementById('periodSelector');
+        periods.forEach(p => {
+            let opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.name;
+            selector.appendChild(opt);
+        });
+
+        function renderPlanner(periodId) {
+            currentPeriodId = periodId;
+            const period = periods.find(p => p.id === periodId);
+            document.getElementById('periodTitle').textContent = period.name;
+
+            // Render Day Headers
+            for (let i = 0; i < 7; i++) {
+                document.getElementById(`w1-d${i}`).innerHTML = `${dayNames[i]}<br>${period.w1Dates[i]}`;
+                document.getElementById(`w2-d${i}`).innerHTML = `${dayNames[i]}<br>${period.w2Dates[i]}`;
+            }
+
+            // Render Reset Habits
+            renderHabits('w1', periodId);
+            renderHabits('w2', periodId);
+
+            // Render Tasks & Notes Input Rows
+            renderEditableRows('w1', 'tasks', 5, periodId);
+            renderEditableRows('w1', 'notes', 4, periodId);
+            renderEditableRows('w2', 'tasks', 5, periodId);
+            renderEditableRows('w2', 'notes', 4, periodId);
+        }
+
+        function renderHabits(weekKey, periodId) {
+            const container = document.getElementById(`${weekKey}-habits`);
+            container.innerHTML = '';
+            
+            resetHabits.forEach((habit, hIdx) => {
+                let row = document.createElement('div');
+                row.className = 'grid grid-cols-8 text-[11px] items-center bg-white';
+                
+                let label = document.createElement('div');
+                label.className = 'p-1.5 font-bold text-slate-700 bg-slate-50 border-r border-slate-200 truncate';
+                label.textContent = habit;
+                row.appendChild(label);
+
+                for (let d = 0; d < 7; d++) {
+                    let cell = document.createElement('div');
+                    cell.className = 'p-1.5 flex justify-center items-center border-r border-slate-200 last:border-r-0';
+                    
+                    let checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    let storageKey = `planner_${periodId}_${weekKey}_habit_${hIdx}_day_${d}`;
+                    checkbox.checked = localStorage.getItem(storageKey) === 'true';
+                    
+                    checkbox.onchange = (e) => {
+                        localStorage.setItem(storageKey, e.target.checked);
+                    };
+                    
+                    cell.appendChild(checkbox);
+                    row.appendChild(cell);
+                }
+                container.appendChild(row);
+            });
+        }
+
+        function renderEditableRows(weekKey, sectionType, count, periodId) {
+            const container = document.getElementById(`${weekKey}-${sectionType}`);
+            container.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                let row = document.createElement('div');
+                row.className = 'flex items-center px-2 py-1 bg-white h-[26px]';
+
+                let input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'flex-grow bg-transparent text-[11px] focus:outline-none text-slate-700';
+                let storageKey = `planner_${periodId}_${weekKey}_${sectionType}_${i}`;
+                input.value = localStorage.getItem(storageKey) || '';
+                
+                input.oninput = (e) => {
+                    localStorage.setItem(storageKey, e.target.value);
+                };
+                row.appendChild(input);
+
+                if (sectionType === 'tasks') {
+                    let checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    let checkKey = `planner_${periodId}_${weekKey}_taskcheck_${i}`;
+                    checkbox.checked = localStorage.getItem(checkKey) === 'true';
+                    checkbox.onchange = (e) => {
+                        localStorage.setItem(checkKey, e.target.checked);
+                    };
+                    row.appendChild(checkbox);
+                }
+
+                container.appendChild(row);
             }
         }
-        
-        updateCountdown();
 
-        // Simple script to save checkboxes to local storage
-        document.querySelectorAll('.task-checkbox').forEach((checkbox) => {
-            const taskId = checkbox.getAttribute('data-task');
-            const savedState = localStorage.getItem('drone-roadmap-task-' + taskId);
-            if (savedState === 'true') checkbox.checked = true;
+        function changePeriod(periodId) {
+            renderPlanner(periodId);
+        }
 
-            checkbox.addEventListener('change', (e) => {
-                localStorage.setItem('drone-roadmap-task-' + taskId, e.target.checked);
-            });
-        });
+        function clearData() {
+            if (confirm("Clear all saved checks and notes for this period?")) {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith(`planner_${currentPeriodId}_`)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                renderPlanner(currentPeriodId);
+            }
+        }
+
+        // Initial Load
+        renderPlanner(periods[0].id);
     </script>
 </body>
 </html>
