@@ -3,187 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bi-Weekly Habit Tracker</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Cross-Device Habit Tracker</title>
+    <!-- iOS Home Screen Optimization -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Habits">
     <style>
-        @media print {
-            @page {
-                size: letter portrait;
-                margin: 0;
-            }
-            body {
-                background: white !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                padding: 0 !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .print-container {
-                box-shadow: none !important;
-                border: none !important;
-                padding: 0.2in !important;
-                margin: 0 !important;
-                width: 100% !important;
-                max-width: none !important;
-            }
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent: #4f46e5;
+            --accent-hover: #4338ca;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --danger: #ef4444;
         }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
+            margin: 0;
+            padding: 12px;
+            color: var(--text-primary);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        h2, h3 {
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        h2 { font-size: 1.25rem; }
+        h3 { font-size: 1.1rem; margin-top: 24px; margin-bottom: 12px; }
+
+        .sync-status {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 550px;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 8px 6px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background: #f8fafc;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        td:first-child {
+            text-align: left;
+            font-weight: 600;
+            background: #f8fafc;
+            padding-left: 10px;
+            max-width: 130px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .streak-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            background: #ffedd5;
+            color: #c2410c;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-top: 2px;
+            font-weight: normal;
+        }
+
         input[type="checkbox"] {
-            accent-color: #1f2937;
-            width: 1.15rem;
-            height: 1.15rem;
+            appearance: none;
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            outline: none;
             cursor: pointer;
+            background: #fff;
+            display: inline-grid;
+            place-content: center;
+            transition: all 0.1s ease;
+        }
+
+        input[type="checkbox"]:checked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        input[type="checkbox"]:checked::before {
+            content: "✓";
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .manager-section {
+            margin-top: 24px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .habit-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        button {
+            padding: 10px 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        button:active {
+            background: var(--accent-hover);
+        }
+
+        .habit-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8fafc;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .delete-btn {
+            background: #fee2e2;
+            color: var(--danger);
+            padding: 4px 10px;
+            font-size: 0.75rem;
+        }
+
+        .delete-btn:active {
+            background: #fecaca;
+        }
+
+        #loading {
+            text-align: center;
+            font-style: italic;
+            color: var(--text-secondary);
+            padding: 30px;
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen p-2 text-slate-900 font-sans flex flex-col items-center">
+<body>
 
-    <!-- Top Action Bar (Hidden on print) -->
-    <div class="no-print w-full max-w-[8.5in] mb-2 flex flex-col sm:flex-row justify-between items-center bg-white p-2.5 rounded-lg shadow-xs border border-slate-200 gap-2">
-        <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
-            <span class="font-bold text-slate-700 text-xs">Date Range / Title:</span>
-            <input type="text" id="titleInput" value="P16 (AUG 03 - AUG 16)" class="border border-slate-300 rounded px-2 py-1 text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 font-medium w-40 sm:w-48" oninput="updateTitle(this.value)">
-        </div>
-        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button onclick="clearData()" class="px-2.5 py-1 text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-200 rounded hover:bg-rose-100 transition">Clear</button>
-            <button onclick="window.print()" class="px-3 py-1 text-[11px] font-semibold bg-slate-800 text-white rounded hover:bg-slate-700 transition shadow-xs">Print / PDF</button>
-        </div>
+<div class="container">
+    <div class="header-flex">
+        <h2>Habit Tracker</h2>
+        <div id="syncStatus" class="sync-status">Synced</div>
+    </div>
+    
+    <div id="loading">Loading your habits...</div>
+    
+    <div class="table-responsive">
+        <table id="habitTable" style="display:none;">
+            <thead>
+                <tr id="tableHeader">
+                    <th>Habit</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Dynamically populated -->
+            </tbody>
+        </table>
     </div>
 
-    <!-- Main Printable Habit Tracker Sheet -->
-    <div class="print-container w-full max-w-[8.5in] bg-white p-2.5 sm:p-5 rounded-xl shadow-md border border-slate-200 flex flex-col gap-3.5">
+    <div class="manager-section">
+        <h3>Manage Habits</h3>
+        <div class="habit-input-group">
+            <input type="text" id="newHabitName" placeholder="New habit name...">
+            <button onclick="addHabit()">Add</button>
+        </div>
+        <div id="habitListManager">
+            <!-- Habit management list -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZPhqx83nxQ9AVeyj6XZhavlSP4H3fISfnIjjHTi9egtls8km71Xzhr33wKSeOpry4/exec';
+    
+    let habits = [];
+    let logs = [];
+    let currentWeekDates = [];
+
+    function setupCurrentWeek() {
+        const curr = new Date();
+        const first = curr.getDate() - curr.getDay() + (curr.getDay() === 0 ? -6 : 1);
         
-        <!-- Header -->
-        <div class="flex justify-between items-end border-b border-slate-300 pb-1.5">
-            <h1 class="text-xs sm:text-base font-bold text-slate-900 tracking-wide uppercase">** DO THE THINGS **</h1>
-            <div id="subTitle" class="text-[11px] sm:text-xs text-slate-500 font-medium italic">P16 (AUG 03 - AUG 16)</div>
-        </div>
-
-        <!-- ================= WEEK 1 ================= -->
-        <div class="flex flex-col border border-slate-300 rounded overflow-hidden bg-white shadow-2xs">
-            <div class="bg-slate-800 text-white text-center font-bold text-[11px] py-1 tracking-wider">WEEK 1</div>
-            
-            <!-- Day Headers -->
-            <div class="grid grid-cols-8 bg-slate-800 text-white text-[9px] sm:text-[10px] font-bold text-center border-t border-slate-700">
-                <div class="p-1 flex items-center justify-center border-r border-slate-700 leading-tight">Habit</div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w1_d0" value="Mon Aug 03" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w1_d0', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w1_d1" value="Tue Aug 04" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w1_d1', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w1_d2" value="Wed Aug 05" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w1_d2', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w1_d3" value="Thu Aug 06" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w1_d3', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w1_d4" value="Fri Aug 07" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w1_d4', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w1_d5" value="Sat Aug 08" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w1_d5', this.value)"></div>
-                <div class="p-1"><input type="text" id="w1_d6" value="Sun Aug 09" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w1_d6', this.value)"></div>
-            </div>
-
-            <!-- Reset Habits Rows -->
-            <div id="w1-habits" class="divide-y divide-slate-200"></div>
-        </div>
-
-        <!-- ================= WEEK 2 ================= -->
-        <div class="flex flex-col border border-slate-300 rounded overflow-hidden bg-white shadow-2xs">
-            <div class="bg-slate-800 text-white text-center font-bold text-[11px] py-1 tracking-wider">WEEK 2</div>
-            
-            <!-- Day Headers -->
-            <div class="grid grid-cols-8 bg-slate-800 text-white text-[9px] sm:text-[10px] font-bold text-center border-t border-slate-700">
-                <div class="p-1 flex items-center justify-center border-r border-slate-700 leading-tight">Habit</div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w2_d0" value="Mon Aug 10" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w2_d0', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w2_d1" value="Tue Aug 11" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w2_d1', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w2_d2" value="Wed Aug 12" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w2_d2', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w2_d3" value="Thu Aug 13" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w2_d3', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w2_d4" value="Fri Aug 14" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w2_d4', this.value)"></div>
-                <div class="p-1 border-r border-slate-700"><input type="text" id="w2_d5" value="Sat Aug 15" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w2_d5', this.value)"></div>
-                <div class="p-1"><input type="text" id="w2_d6" value="Sun Aug 16" class="w-full bg-transparent text-center text-white focus:outline-none text-[8.5px] sm:text-[10px] font-bold" oninput="saveDate('w2_d6', this.value)"></div>
-            </div>
-
-            <!-- Reset Habits Rows -->
-            <div id="w2-habits" class="divide-y divide-slate-200"></div>
-        </div>
-
-    </div>
-
-    <script>
-        const defaultHabits = ["Sink reset", "No screens", "Dog AM", "Dog PM", "Desk 30-min"];
-
-        function updateTitle(val) {
-            document.getElementById('subTitle').textContent = val;
-            localStorage.setItem('tracker_title', val);
-        }
-
-        function saveDate(id, val) {
-            localStorage.setItem(`tracker_date_${id}`, val);
-        }
-
-        function renderHabits(weekKey) {
-            const container = document.getElementById(`${weekKey}-habits`);
-            container.innerHTML = '';
-            
-            defaultHabits.forEach((defaultHabit, hIdx) => {
-                let row = document.createElement('div');
-                row.className = 'grid grid-cols-8 text-[11px] items-center bg-white';
-                
-                let labelContainer = document.createElement('div');
-                labelContainer.className = 'p-1 font-bold text-slate-700 bg-slate-50 border-r border-slate-200 h-full flex items-center';
-                
-                let habitInput = document.createElement('input');
-                habitInput.type = 'text';
-                let habitKey = `tracker_${weekKey}_habit_name_${hIdx}`;
-                habitInput.value = localStorage.getItem(habitKey) || defaultHabit;
-                habitInput.className = 'w-full bg-transparent text-[10px] sm:text-[11px] font-bold text-slate-700 focus:outline-none text-center';
-                habitInput.oninput = (e) => localStorage.setItem(habitKey, e.target.value);
-                
-                labelContainer.appendChild(habitInput);
-                row.appendChild(labelContainer);
-
-                for (let d = 0; d < 7; d++) {
-                    let cell = document.createElement('div');
-                    cell.className = 'p-1 flex justify-center items-center border-r border-slate-200 last:border-r-0 h-[32px] sm:h-[36px]';
-                    
-                    let checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    let storageKey = `tracker_${weekKey}_habit_${hIdx}_day_${d}`;
-                    checkbox.checked = localStorage.getItem(storageKey) === 'true';
-                    checkbox.onchange = (e) => localStorage.setItem(storageKey, e.target.checked);
-                    
-                    cell.appendChild(checkbox);
-                    row.appendChild(cell);
-                }
-                container.appendChild(row);
+        currentWeekDates = [];
+        for (let i = 0; i < 7; i++) {
+            let nextDay = new Date(new Date().setDate(first + i));
+            currentWeekDates.push({
+                dateStr: nextDay.toISOString().split('T')[0],
+                dayName: nextDay.toLocaleDateString('en-US', { weekday: 'short' }),
+                shortDate: `${nextDay.getMonth() + 1}/${nextDay.getDate()}`
             });
         }
+    }
 
-        function clearData() {
-            if (confirm("Clear all saved checks and custom text?")) {
-                Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith('tracker_')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-                location.reload();
-            }
+    function fetchData() {
+        const cachedHabits = localStorage.getItem('hb_habits');
+        const cachedLogs = localStorage.getItem('hb_logs');
+        if (cachedHabits && cachedLogs) {
+            habits = JSON.parse(cachedHabits);
+            logs = JSON.parse(cachedLogs);
+            showUI();
         }
 
-        // Load saved title
-        const savedTitle = localStorage.getItem('tracker_title');
-        if (savedTitle) {
-            document.getElementById('titleInput').value = savedTitle;
-            document.getElementById('subTitle').textContent = savedTitle;
-        }
-
-        // Load saved dates
-        for (let w = 1; w <= 2; w++) {
-            for (let d = 0; d < 7; d++) {
-                let id = `w${w}_d${d}`;
-                let savedDate = localStorage.getItem(`tracker_date_${id}`);
-                if (savedDate !== null) {
-                    document.getElementById(id).value = savedDate;
+        fetch(SCRIPT_URL)
+            .then(res => res.json())
+            .then(data => {
+                habits = data.habits || [];
+                logs = data.logs || [];
+                localStorage.setItem('hb_habits', JSON.stringify(habits));
+                localStorage.setItem('hb_logs', JSON.stringify(logs));
+                showUI();
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                if (!habits.length) {
+                    document.getElementById('loading').textContent = 'Error loading data. Check URL configuration.';
                 }
+            });
+    }
+
+    function showUI() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('habitTable').style.display = 'table';
+        renderUI();
+    }
+
+    function renderUI() {
+        renderTable();
+        renderManagerList();
+    }
+
+    function calculateStreak(habitName) {
+        let streak = 0;
+        const today = new Date();
+        
+        for (let i = 0; i < 60; i++) {
+            let d = new Date();
+            d.setDate(today.getDate() - i);
+            let dateStr = d.toISOString().split('T')[0];
+            
+            let log = logs.find(l => l.date === dateStr && l.habit === habitName);
+            if (log && log.status === 'Done') {
+                streak++;
+            } else if (i === 0) {
+                continue;
+            } else {
+                break;
             }
         }
+        return streak;
+    }
 
-        renderHabits('w1');
-        renderHabits('w2');
-    </script>
-</body>
-</html>
+    function renderTable() {
+        const headerRow = document.getElementById('tableHeader');
+        headerRow.innerHTML = '<th>Habit</th>';
+        currentWeekDates.forEach(d => {
+            headerRow.innerHTML += `<th>${d.dayName}<br><span style="font-size:10px; font-weight:normal; color:#64748b;">${d.shortDate}</span></th>`;
+        });
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        habits.forEach(habit => {
+            const streak = calculateStreak(habit);
+            let streakHtml = streak > 1 ? `<br><span class="streak-badge">🔥 ${streak} days</span>` : '';
+            
+            let row = `<tr><td>${habit}${streakHtml}</td>`;
+            currentWeekDates.forEach(d => {
+                const logMatch = logs.find(l => l.date === d.dateStr && l.habit === habit);
+                const isChecked = logMatch && logMatch.status === 'Done' ? 'checked' : '';
+                row += `<td><input type="checkbox" ${isChecked} onchange="toggleHabit('${habit}', '${d.dateStr}', this.checked)"></td>`;
+            });
+            row += `</tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function renderManagerList() {
+        const managerDiv = document.getElementById('habitListManager');
+        managerDiv.innerHTML = '';
+        habits.forEach((habit, index) => {
+            managerDiv.innerHTML += `
+                <div class="habit-list-item">
+                    <span>${habit}</span>
+                    <button class="delete-btn" onclick="removeHabit(${index})">Delete</button>
+                </div>
+            `;
+        });
+    }
+
+    function updateStatusText(text, isError = false) {
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.textContent = text;
+        statusEl.style.color = isError ? 'var(--danger)' : 'var(--text-secondary)';
+    }
+
+    function toggleHabit(habit, dateStr, isChecked) {
+        const status = isChecked ? 'Done' : 'Missed';
+        updateStatusText('Saving...');
+
+        const existingIndex = logs.findIndex(l => l.date === dateStr && l.habit === habit);
+        if (existingIndex >= 0) {
+            logs[existingIndex].status = status;
+        } else {
+            logs.push({ date: dateStr, habit: habit, status: status });
+        }
+        localStorage.setItem('hb_logs', JSON.stringify(logs));
+        renderTable();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'saveLog', date: dateStr, habit: habit, status: status })
+        })
+        .then(() => updateStatusText('Synced'))
+        .catch(() => updateStatusText('Sync failed', true));
+    }
+
+---
+
+### Quick steps to push to GitHub Pages:
+1. Save this code into a file named exactly **`index.html`**.
+2. Create a new public repository on GitHub (e.g., `habit-tracker`).
+3. Upload/commit `index.html` into the main branch of that repository.
+4. Go to your repository's **Settings** > **Pages**.
+5. Under **Build and deployment**, change the branch from *None* to **main**, click **Save**, and your live URL will appear within a minute!
