@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cross-Device Habit Tracker</title>
-    <!-- iOS Home Screen Optimization -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Habits">
@@ -246,7 +246,7 @@
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZPhqx83nxQ9AVeyj6XZhavlSP4H3fISfnIjjHTi9egtls8km71Xzhr33wKSeOpry4/exec';
     
-    let habits = [];
+    let habits = ["Drink Water", "Exercise", "Reading"]; // Default fallback
     let logs = [];
     let currentWeekDates = [];
 
@@ -266,28 +266,31 @@
     }
 
     function fetchData() {
+        // Fallback to local storage cache if available
         const cachedHabits = localStorage.getItem('hb_habits');
         const cachedLogs = localStorage.getItem('hb_logs');
-        if (cachedHabits && cachedLogs) {
-            habits = JSON.parse(cachedHabits);
-            logs = JSON.parse(cachedLogs);
-            showUI();
-        }
+        if (cachedHabits) habits = JSON.parse(cachedHabits);
+        if (cachedLogs) logs = JSON.parse(cachedLogs);
+        
+        // Show UI immediately using fallback/cache so it never gets stuck loading
+        showUI();
 
-        fetch(SCRIPT_URL)
+        // Fetch fresh data from Google Sheet in background
+        fetch(SCRIPT_URL, { method: 'GET', mode: 'cors' })
             .then(res => res.json())
             .then(data => {
-                habits = data.habits || [];
-                logs = data.logs || [];
-                localStorage.setItem('hb_habits', JSON.stringify(habits));
-                localStorage.setItem('hb_logs', JSON.stringify(logs));
-                showUI();
+                if (data.habits && data.habits.length > 0) {
+                    habits = data.habits;
+                    localStorage.setItem('hb_habits', JSON.stringify(habits));
+                }
+                if (data.logs) {
+                    logs = data.logs;
+                    localStorage.setItem('hb_logs', JSON.stringify(logs));
+                }
+                renderUI();
             })
             .catch(err => {
-                console.error('Fetch error:', err);
-                if (!habits.length) {
-                    document.getElementById('loading').textContent = 'Error loading data. Check URL configuration.';
-                }
+                console.log('Using offline/cached data due to fetch restriction:', err);
             });
     }
 
@@ -390,4 +393,40 @@
         .catch(() => updateStatusText('Sync failed', true));
     }
 
----
+    function addHabit() {
+        const input = document.getElementById('newHabitName');
+        const val = input.value.trim();
+        if (!val) return;
+        
+        habits.push(val);
+        input.value = '';
+        localStorage.setItem('hb_habits', JSON.stringify(habits));
+        renderUI();
+        syncHabitsToSheet();
+    }
+
+    function removeHabit(index) {
+        habits.splice(index, 1);
+        localStorage.setItem('hb_habits', JSON.stringify(habits));
+        renderUI();
+        syncHabitsToSheet();
+    }
+
+    function syncHabitsToSheet() {
+        updateStatusText('Syncing...');
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateHabits', habits: habits })
+        })
+        .then(() => updateStatusText('Synced'))
+        .catch(() => updateStatusText('Sync failed', true));
+    }
+
+    setupCurrentWeek();
+    fetchData();
+</script>
+
+</body>
+</html>
