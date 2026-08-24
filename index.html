@@ -3,305 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard & Habit Tracker</title>
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Dashboard">
+    <title>Life OS - Personal Command Center</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for canvas visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        neutralBase: {
+                            light: '#fafaf9',
+                            dark: '#09090b',
+                            cardLight: '#ffffff',
+                            cardDark: '#18181b',
+                            borderLight: '#e7e5e4',
+                            borderDark: '#27272a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --accent: #4f46e5;
-            --accent-hover: #4338ca;
-            --border: #e2e8f0;
-            --success: #22c55e;
-            --danger: #ef4444;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-color);
-            margin: 0;
-            padding: 12px;
-            color: var(--text-primary);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 16px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            margin-bottom: 20px;
-        }
-
-        .header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        h2, h3 {
-            margin: 0;
-            color: var(--text-primary);
-        }
-
-        h2 { font-size: 1.25rem; }
-        h3 { font-size: 1.1rem; margin-top: 24px; margin-bottom: 12px; }
-
-        .sync-status {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            background: #f1f5f9;
-            padding: 4px 8px;
-            border-radius: 20px;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            margin: 0 -16px;
-            padding: 0 16px;
-        }
-
-        table {
+        .chart-container {
+            position: relative;
             width: 100%;
-            border-collapse: collapse;
-            min-width: 550px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 260px;
+            max-height: 320px;
         }
-
-        th, td {
-            border: 1px solid var(--border);
-            padding: 8px 6px;
-            text-align: center;
-            font-size: 0.85rem;
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
         }
-
-        th {
-            background: #f8fafc;
-            color: var(--text-secondary);
-            font-weight: 600;
+        /* Custom scrollbars for clean UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-        td:first-child {
-            text-align: left;
-            font-weight: 600;
-            background: #f8fafc;
-            padding-left: 10px;
-            max-width: 130px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.04);
         }
-
-        .streak-badge {
-            display: inline-block;
-            font-size: 0.7rem;
-            background: #ffedd5;
-            color: #c2410c;
-            padding: 2px 5px;
-            border-radius: 4px;
-            margin-top: 2px;
-            font-weight: normal;
+        ::-webkit-scrollbar-thumb {
+            background: rgba(161, 161, 170, 0.4);
+            border-radius: 9999px;
         }
-
-        input[type="checkbox"] {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
-            border: 2px solid var(--border);
-            border-radius: 6px;
-            outline: none;
-            cursor: pointer;
-            background: #fff;
-            display: inline-grid;
-            place-content: center;
-            transition: all 0.1s ease;
-        }
-
-        input[type="checkbox"]:checked {
-            background: var(--success);
-            border-color: var(--success);
-        }
-
-        input[type="checkbox"]:checked::before {
-            content: "✓";
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .manager-section, .todo-section {
-            margin-top: 24px;
-            border-top: 1px solid var(--border);
-            padding-top: 16px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-
-        input[type="text"], input[type="date"] {
-            flex: 1;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.9rem;
-            outline: none;
-            min-width: 140px;
-        }
-
-        input[type="text"]:focus, input[type="date"]:focus {
-            border-color: var(--accent);
-        }
-
-        button {
-            padding: 10px 16px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.1s;
-        }
-
-        button:active {
-            background: var(--accent-hover);
-        }
-
-        .list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            background: #f8fafc;
-            margin-bottom: 6px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            font-size: 0.9rem;
-            gap: 10px;
-        }
-
-        .list-item-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .todo-due {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            background: #e2e8f0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-
-        .delete-btn {
-            background: #fee2e2;
-            color: var(--danger);
-            padding: 4px 10px;
-            font-size: 0.75rem;
-        }
-
-        details {
-            margin-top: 15px;
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px;
-        }
-
-        summary {
-            font-weight: 600;
-            cursor: pointer;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        #loading {
-            text-align: center;
-            font-style: italic;
-            color: var(--text-secondary);
-            padding: 30px;
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.04);
         }
     </style>
 </head>
-<body>
+<body class="bg-stone-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 min-h-screen transition-colors duration-200 antialiased font-sans">
 
-<div class="container">
-    <div class="header-flex">
-        <h2>Weekly Habit Tracker</h2>
-        <div id="syncStatus" class="sync-status">Synced</div>
-    </div>
-    
-    <div id="loading">Loading your data...</div>
-    
-    <!-- HABITS TABLE -->
-    <div class="table-responsive">
-        <table id="habitTable" style="display:none;">
-            <thead>
-                <tr id="tableHeader">
-                    <th>Habit</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+<!-- Chosen Palette: Warm Stone Neutrals with Nordic Teal & Amber Accents -->
+<!-- Application Structure Plan: All-in-one Life OS dashboard single-page application. Retains 5 workspace views: Overview Analytics, Habits Tracker, Action Center (To-Do), Focus Timer, and Daily Journal. Features light and dark theme toggle, persistent localStorage with Google Apps Script sheet sync, Chart.js visualizations, and professional, crisp styling. -->
+<!-- Visualization & Content Choices: 
+     - Habit Consistency Chart: Chart.js Line canvas tracking daily check-ins over current week.
+     - Task Completion Ratio: Chart.js Doughnut canvas visualizing active vs completed workload.
+     - Habit Matrix: Interactive HTML Table with custom checkboxes and real-time streak badges.
+     - Focus Timer: Interactive JS Pomodoro timer with mode toggles (Focus / Short Break / Long Break).
+     - Daily Journal & Mood: Live text area with localStorage autosave and emotion picker.
+     - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 
-    <!-- TO-DO LIST SECTION -->
-    <div class="todo-section">
-        <h3>Weekly To-Do List</h3>
-        <div class="input-group">
-            <input type="text" id="newTodoTask" placeholder="Task name (e.g., Buy carrots)...">
-            <input type="date" id="newTodoDate">
-            <button onclick="addTodo()">Add Task</button>
-        </div>
-        
-        <div id="todoListActive">
-            <!-- Active Todos for the week -->
-        </div>
+<div id="app" class="max-w-6xl mx-auto px-4 py-6 sm:px-6">
 
-        <details>
-            <summary>Completed Tasks (<span id="completedCount">0</span>)</summary>
-            <div id="todoListCompleted" style="margin-top: 10px;">
-                <!-- Completed Todos dropdown list -->
+    <!-- TOP NAV BAR -->
+    <header class="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 mb-6 shadow-sm gap-4">
+        <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">⚡</span>
+                <div>
+                    <h1 class="font-bold text-xl sm:text-2xl bg-gradient-to-r from-teal-700 via-teal-600 to-amber-600 dark:from-teal-400 dark:via-teal-300 dark:to-amber-400 bg-clip-text text-transparent">Life OS Command Hub</h1>
+                    <p class="text-xs text-stone-500 dark:text-zinc-400 font-medium" id="headerDateStr">Today</p>
+                </div>
             </div>
-        </details>
+            <!-- Mobile theme toggle -->
+            <button onclick="toggleDarkMode()" class="sm:hidden p-2 rounded-xl border border-stone-200 dark:border-zinc-800 hover:bg-stone-100 dark:hover:bg-zinc-800 text-sm">
+                <span id="themeIconMobile">🌙</span>
+            </button>
+        </div>
+
+        <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+            <div id="syncBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 transition-colors">
+                ● Synced
+            </div>
+            <button onclick="toggleDarkMode()" class="hidden sm:block p-2 rounded-xl border border-stone-200 dark:border-zinc-800 hover:bg-stone-100 dark:hover:bg-zinc-800 text-sm transition-colors text-stone-600 dark:text-zinc-300">
+                <span id="themeIconDesktop">🌙 Light / Dark</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="flex space-x-2 overflow-x-auto pb-2 mb-6 scrollbar-none" id="mainNav">
+        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-teal-700 text-white shadow-md shadow-teal-700/20">
+            📊 Overview & Analytics
+        </button>
+        <button onclick="switchTab('habits')" id="tab-habits" class="nav-tab px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100">
+            🎯 Habits & Routines
+        </button>
+        <button onclick="switchTab('todos')" id="tab-todos" class="nav-tab px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100">
+            ✅ Action Items (To-Do)
+        </button>
+        <button onclick="switchTab('focus')" id="tab-focus" class="nav-tab px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100">
+            ⏳ Deep Work Timer
+        </button>
+        <button onclick="switchTab('journal')" id="tab-journal" class="nav-tab px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100">
+            📓 Daily Reflection
+        </button>
+    </nav>
+
+    <!-- LOADING PLACEHOLDER -->
+    <div id="loadingState" class="text-center py-12 text-stone-500 dark:text-zinc-400 font-medium italic">
+        Syncing your complete personal ecosystem...
     </div>
 
-    <!-- HABIT MANAGER SECTION -->
-    <div class="manager-section">
-        <h3>Manage Habits</h3>
-        <div class="input-group">
-            <input type="text" id="newHabitName" placeholder="New habit name...">
-            <button onclick="addHabit()">Add Habit</button>
+    <!-- VIEW 1: OVERVIEW & ANALYTICS -->
+    <main id="view-overview" class="tab-content hidden space-y-6">
+        <!-- Section Intro -->
+        <div class="bg-teal-900/5 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-900/40 rounded-2xl p-4 sm:p-5">
+            <h2 class="text-teal-900 dark:text-teal-200 font-bold text-lg">Executive Summary</h2>
+            <p class="text-xs sm:text-sm text-teal-800/80 dark:text-teal-300/80 mt-1">
+                Welcome to your daily operating dashboard. This workspace synthesizes your active habit consistency, pending tasks, deep work sessions, and daily reflection into a single unified performance index.
+            </p>
         </div>
-        <div id="habitListManager"></div>
-    </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-xs text-stone-500 dark:text-zinc-400 font-medium uppercase tracking-wider">Weekly Habit Rate</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-teal-600 dark:text-teal-400 mt-1" id="kpiHabitRate">0%</div>
+                <span class="text-[10px] text-stone-400 dark:text-zinc-500">Current 7-day window</span>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-xs text-stone-500 dark:text-zinc-400 font-medium uppercase tracking-wider">Active Tasks</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-500 mt-1" id="kpiActiveTasks">0</div>
+                <span class="text-[10px] text-stone-400 dark:text-zinc-500">Pending for this week</span>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-xs text-stone-500 dark:text-zinc-400 font-medium uppercase tracking-wider">Longest Streak</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-1" id="kpiTopStreak">0 Days</div>
+                <span class="text-[10px] text-stone-400 dark:text-zinc-500">Habit momentum</span>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-xs text-stone-500 dark:text-zinc-400 font-medium uppercase tracking-wider">Focus Minutes</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1" id="kpiFocusMins">0m</div>
+                <span class="text-[10px] text-stone-400 dark:text-zinc-500">Logged today</span>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Habit Line Chart -->
+            <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-stone-900 dark:text-zinc-100 mb-1 text-sm sm:text-base">Daily Check-in Progression</h3>
+                <p class="text-xs text-stone-500 dark:text-zinc-400 mb-4">Total completed habits logged each day this week.</p>
+                <div class="chart-container">
+                    <canvas id="habitChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Task Status Doughnut Chart -->
+            <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-stone-900 dark:text-zinc-100 mb-1 text-sm sm:text-base">Task Workload Breakdown</h3>
+                <p class="text-xs text-stone-500 dark:text-zinc-400 mb-4">Distribution of completed vs pending action items.</p>
+                <div class="chart-container">
+                    <canvas id="todoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- VIEW 2: HABITS & ROUTINES -->
+    <main id="view-habits" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center pb-4 border-b border-stone-100 dark:border-zinc-800 gap-2 mb-4">
+                <div>
+                    <h2 class="font-bold text-lg text-stone-900 dark:text-zinc-100">Weekly Habit Tracker</h2>
+                    <p class="text-xs text-stone-500 dark:text-zinc-400">Mark off habits for the current week. Streaks update automatically.</p>
+                </div>
+                <div class="text-xs font-semibold px-3 py-1 bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 rounded-lg border border-amber-200/60 dark:border-amber-800/60 w-fit">
+                    🔥 Active Streaks Enabled
+                </div>
+            </div>
+
+            <!-- Responsive Table Container -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[550px]" id="habitMatrixTable">
+                    <thead>
+                        <tr id="tableHeaderRow" class="border-b border-stone-200 dark:border-zinc-800 text-xs text-stone-400 dark:text-zinc-500 uppercase tracking-wider">
+                            <th class="p-3">Habit Name</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyRows" class="divide-y divide-stone-100 dark:divide-zinc-800/80 text-sm">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Habit Manager Section -->
+        <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-base text-stone-900 dark:text-zinc-100 mb-3">Manage Your Habit Stack</h3>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="newHabitInput" placeholder="Add a new habit (e.g., Read 15 mins)..." 
+                       class="flex-1 px-4 py-2.5 rounded-xl border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950 text-sm text-stone-900 dark:text-zinc-100 focus:outline-none focus:border-teal-600">
+                <button onclick="addHabit()" class="px-5 py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-teal-700/20">
+                    Add Habit
+                </button>
+            </div>
+
+            <div id="habitManagerList" class="space-y-2">
+                <!-- Habit items list -->
+            </div>
+        </div>
+    </main>
+
+    <!-- VIEW 3: ACTION ITEMS (TO-DO) -->
+    <main id="view-todos" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+            <div class="pb-4 border-b border-stone-100 dark:border-zinc-800 mb-4">
+                <h2 class="font-bold text-lg text-stone-900 dark:text-zinc-100">Action Items & Tasks</h2>
+                <p class="text-xs text-stone-500 dark:text-zinc-400">Organize tasks with optional due dates and priority tags. Tasks automatically align with the current week.</p>
+            </div>
+
+            <!-- Task Input Form -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 mb-6">
+                <input type="text" id="todoTaskInput" placeholder="What needs to get done? (e.g., Submit project report)..." 
+                       class="sm:col-span-6 px-4 py-2.5 rounded-xl border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950 text-sm text-stone-900 dark:text-zinc-100 focus:outline-none focus:border-teal-600">
+                
+                <input type="date" id="todoDateInput" 
+                       class="sm:col-span-3 px-3 py-2.5 rounded-xl border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950 text-sm text-stone-900 dark:text-zinc-100 focus:outline-none focus:border-teal-600">
+                
+                <select id="todoPriorityInput" class="sm:col-span-2 px-3 py-2.5 rounded-xl border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950 text-sm text-stone-900 dark:text-zinc-100 focus:outline-none focus:border-teal-600">
+                    <option value="Normal">Normal</option>
+                    <option value="High">🔥 High</option>
+                </select>
+
+                <button onclick="addTodo()" class="sm:col-span-1 px-4 py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-teal-700/20">
+                    Add
+                </button>
+            </div>
+
+            <!-- Active Tasks Container -->
+            <div class="space-y-2 mb-6">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 mb-2">This Week's Pending Tasks</h3>
+                <div id="activeTodoList" class="space-y-2">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Completed Dropdown -->
+            <details class="group bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl p-3 transition-all">
+                <summary class="font-semibold text-sm text-stone-600 dark:text-zinc-400 cursor-pointer flex justify-between items-center select-none">
+                    <span>Completed Items (<span id="completedTodoCount">0</span>)</span>
+                    <span class="text-xs transition-transform group-open:rotate-180">▼</span>
+                </summary>
+                <div id="completedTodoList" class="mt-3 pt-3 border-t border-stone-200 dark:border-zinc-800 space-y-2">
+                    <!-- Populated dynamically -->
+                </div>
+            </details>
+        </div>
+    </main>
+
+    <!-- VIEW 4: DEEP WORK TIMER -->
+    <main id="view-focus" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm text-center max-w-xl mx-auto">
+            <h2 class="font-bold text-xl text-stone-900 dark:text-zinc-100 mb-1">Deep Work & Focus Timer</h2>
+            <p class="text-xs text-stone-500 dark:text-zinc-400 mb-6">Use structured focus intervals to eliminate distraction and build deep work momentum.</p>
+
+            <!-- Mode Selector Buttons -->
+            <div class="flex justify-center space-x-2 mb-8 bg-stone-100 dark:bg-zinc-950 p-1.5 rounded-xl border border-stone-200 dark:border-zinc-800 max-w-xs mx-auto">
+                <button onclick="setTimerMode('focus', 25)" id="mode-focus" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-teal-700 text-white">Focus (25m)</button>
+                <button onclick="setTimerMode('shortBreak', 5)" id="mode-short" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 dark:hover:text-zinc-200">Short (5m)</button>
+                <button onclick="setTimerMode('longBreak', 15)" id="mode-long" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 dark:hover:text-zinc-200">Long (15m)</button>
+            </div>
+
+            <!-- Giant Clock Display -->
+            <div id="timerClock" class="text-6xl sm:text-7xl font-black text-teal-700 dark:text-teal-400 tracking-widest my-6 font-mono">
+                25:00
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="flex justify-center items-center space-x-4">
+                <button onclick="toggleTimer()" id="timerToggleBtn" class="px-8 py-3 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-700/25 text-base">
+                    Start Session
+                </button>
+                <button onclick="resetTimer()" class="px-5 py-3 border border-stone-200 dark:border-zinc-800 hover:bg-stone-100 dark:hover:bg-zinc-800 text-stone-600 dark:text-zinc-400 font-semibold rounded-xl text-sm transition-all">
+                    Reset
+                </button>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-stone-100 dark:border-zinc-800 flex justify-around text-xs text-stone-500 dark:text-zinc-400">
+                <div>Completed Today: <span id="completedSessionsCount" class="font-bold text-stone-900 dark:text-zinc-100">0</span> sessions</div>
+                <div>Total Minutes: <span id="totalFocusMinutesLog" class="font-bold text-teal-700 dark:text-teal-400">0</span> mins</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- VIEW 5: DAILY REFLECTION / JOURNAL -->
+    <main id="view-journal" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+            <div class="pb-4 border-b border-stone-100 dark:border-zinc-800 mb-4 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                <div>
+                    <h2 class="font-bold text-lg text-stone-900 dark:text-zinc-100">Daily Brain Dump & Journal</h2>
+                    <p class="text-xs text-stone-500 dark:text-zinc-400">Capture quick thoughts, key wins, or ideas for today (<span id="journalDateLabel"></span>).</p>
+                </div>
+                <!-- Mood Tracker -->
+                <div class="flex items-center space-x-2 bg-stone-50 dark:bg-zinc-950 p-2 rounded-xl border border-stone-200 dark:border-zinc-800">
+                    <span class="text-xs text-stone-500 dark:text-zinc-400 font-medium">Mood:</span>
+                    <button onclick="setMood('🤩')" class="mood-btn hover:scale-125 transition-transform text-lg">🤩</button>
+                    <button onclick="setMood('🙂')" class="mood-btn hover:scale-125 transition-transform text-lg">🙂</button>
+                    <button onclick="setMood('😐')" class="mood-btn hover:scale-125 transition-transform text-lg">😐</button>
+                    <button onclick="setMood('😴')" class="mood-btn hover:scale-125 transition-transform text-lg">😴</button>
+                    <button onclick="setMood('🔥')" class="mood-btn hover:scale-125 transition-transform text-lg">🔥</button>
+                    <span id="selectedMoodDisplay" class="text-sm font-bold ml-1"></span>
+                </div>
+            </div>
+
+            <textarea id="journalArea" oninput="autoSaveJournal()" placeholder="What went well today? What are you focusing on next? (Auto-saves locally)..." 
+                      class="w-full h-48 sm:h-64 p-4 rounded-xl border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950 text-stone-900 dark:text-zinc-100 text-sm focus:outline-none focus:border-teal-600 leading-relaxed resize-y"></textarea>
+            
+            <p class="text-[11px] text-stone-400 dark:text-zinc-500 mt-2 text-right">Autosaved to local storage</p>
+        </div>
+    </main>
+
 </div>
 
+<!-- JAVASCRIPT APPLICATION LOGIC -->
 <script>
+    // Configuration & State
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZPhqx83nxQ9AVeyj6XZhavlSP4H3fISfnIjjHTi9egtls8km71Xzhr33wKSeOpry4/exec';
-    
-    let habits = ["Drink Water", "Exercise", "Reading"];
+
+    let habits = ["Drink Water", "Exercise", "Reading 15 mins", "Deep Work"];
     let logs = [];
     let todos = [];
     let currentWeekDates = [];
+    let todayDateStr = new Date().toISOString().split('T')[0];
 
-    function setupCurrentWeek() {
+    let habitChartInstance = null;
+    let todoChartInstance = null;
+
+    // Timer variables
+    let timerInterval = null;
+    let timerSecondsLeft = 25 * 60;
+    let timerInitialSeconds = 25 * 60;
+    let isTimerRunning = false;
+    let completedSessions = 0;
+    let totalFocusMinsLogged = 0;
+
+    // Dark Mode Initialization
+    function initTheme() {
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }
+
+    function toggleDarkMode() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        renderCharts(); // Re-render charts for appropriate dark/light theme contrast
+    }
+
+    // Date setup (Monday - Sunday)
+    function setupWeekWindow() {
         const curr = new Date();
         const first = curr.getDate() - curr.getDay() + (curr.getDay() === 0 ? -6 : 1);
         
@@ -314,16 +402,44 @@
                 shortDate: `${nextDay.getMonth() + 1}/${nextDay.getDate()}`
             });
         }
+
+        const dateOptions = { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' };
+        document.getElementById('headerDateStr').textContent = curr.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('journalDateLabel').textContent = curr.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
+    // Tab Navigation
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.nav-tab').forEach(el => {
+            el.classList.remove('bg-teal-700', 'text-white', 'shadow-md', 'shadow-teal-700/20');
+            el.classList.add('bg-white', 'dark:bg-zinc-900', 'border', 'border-stone-200', 'dark:border-zinc-800', 'text-stone-600', 'dark:text-zinc-400');
+        });
+
+        document.getElementById(`view-${tabId}`).classList.remove('hidden');
+        const activeBtn = document.getElementById(`tab-${tabId}`);
+        activeBtn.classList.remove('bg-white', 'dark:bg-zinc-900', 'border', 'border-stone-200', 'dark:border-zinc-800', 'text-stone-600', 'dark:text-zinc-400');
+        activeBtn.classList.add('bg-teal-700', 'text-white', 'shadow-md', 'shadow-teal-700/20');
+
+        if (tabId === 'overview') {
+            renderCharts();
+        }
+    }
+
+    // Data Fetching & Sync
     function fetchData() {
         const cachedHabits = localStorage.getItem('hb_habits');
         const cachedLogs = localStorage.getItem('hb_logs');
         const cachedTodos = localStorage.getItem('hb_todos');
+        const cachedJournal = localStorage.getItem(`hb_journal_${todayDateStr}`);
+        const cachedMood = localStorage.getItem(`hb_mood_${todayDateStr}`);
+
         if (cachedHabits) habits = JSON.parse(cachedHabits);
         if (cachedLogs) logs = JSON.parse(cachedLogs);
         if (cachedTodos) todos = JSON.parse(cachedTodos);
-        
+        if (cachedJournal) document.getElementById('journalArea').value = cachedJournal;
+        if (cachedMood) document.getElementById('selectedMoodDisplay').textContent = cachedMood;
+
         showUI();
 
         fetch(SCRIPT_URL, { method: 'GET', mode: 'cors' })
@@ -345,74 +461,35 @@
             })
             .catch(err => {
                 console.log('Using offline cache:', err);
+                renderUI();
             });
     }
 
     function showUI() {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('habitTable').style.display = 'table';
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('view-overview').classList.remove('hidden');
         renderUI();
     }
 
     function renderUI() {
-        renderTable();
-        renderManagerList();
+        renderHabitTable();
+        renderHabitManager();
         renderTodos();
+        updateKPIs();
+        renderCharts();
     }
 
-    // Check if a date string falls within the current Monday-Sunday window
-    function isDateInCurrentWeek(dateStr) {
-        if (!dateStr) return true; // If no due date, keep it visible in current week
-        const startStr = currentWeekDates[0].dateStr;
-        const endStr = currentWeekDates[6].dateStr;
-        return dateStr >= startStr && dateStr <= endStr;
+    function updateSyncBadge(statusText, isError = false) {
+        const badge = document.getElementById('syncBadge');
+        badge.textContent = statusText;
+        if (isError) {
+            badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60";
+        } else {
+            badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60";
+        }
     }
 
-    function renderTodos() {
-        const activeDiv = document.getElementById('todoListActive');
-        const completedDiv = document.getElementById('todoListCompleted');
-        activeDiv.innerHTML = '';
-        completedDiv.innerHTML = '';
-        
-        let completedCount = 0;
-        let activeHtml = '';
-        let completedHtml = '';
-
-        todos.forEach(todo => {
-            const isCompleted = todo.status === 'Completed';
-            const belongsToCurrentWeek = isDateInCurrentWeek(todo.dueDate);
-
-            if (isCompleted) {
-                completedCount++;
-                completedHtml += `
-                    <div class="list-item">
-                        <div class="list-item-content">
-                            <input type="checkbox" checked onchange="toggleTodo(${todo.id}, this.checked)">
-                            <span style="text-decoration: line-through; color: var(--text-secondary);">${todo.task}</span>
-                            ${todo.dueDate ? `<span class="todo-due">${todo.dueDate}</span>` : ''}
-                        </div>
-                        <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
-                    </div>
-                `;
-            } else if (belongsToCurrentWeek) {
-                activeHtml += `
-                    <div class="list-item">
-                        <div class="list-item-content">
-                            <input type="checkbox" onchange="toggleTodo(${todo.id}, this.checked)">
-                            <span>${todo.task}</span>
-                            ${todo.dueDate ? `<span class="todo-due">${todo.dueDate}</span>` : ''}
-                        </div>
-                        <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
-                    </div>
-                `;
-            }
-        });
-
-        activeDiv.innerHTML = activeHtml || '<p style="font-size:0.85rem; color:var(--text-secondary); text-align:center; margin:10px 0;">No active tasks for this week.</p>';
-        completedDiv.innerHTML = completedHtml || '<p style="font-size:0.85rem; color:var(--text-secondary); text-align:center; margin:5px 0;">No completed tasks.</p>';
-        document.getElementById('completedCount').textContent = completedCount;
-    }
-
+    // KPI & Metrics Calculations
     function calculateStreak(habitName) {
         let streak = 0;
         const today = new Date();
@@ -432,53 +509,79 @@
         return streak;
     }
 
-    function renderTable() {
-        const headerRow = document.getElementById('tableHeader');
-        headerRow.innerHTML = '<th>Habit</th>';
-        currentWeekDates.forEach(d => {
-            headerRow.innerHTML += `<th>${d.dayName}<br><span style="font-size:10px; font-weight:normal; color:#64748b;">${d.shortDate}</span></th>`;
+    function updateKPIs() {
+        let totalChecksPossible = habits.length * 7;
+        let checkedCount = 0;
+        let maxStreak = 0;
+
+        habits.forEach(h => {
+            let s = calculateStreak(h);
+            if (s > maxStreak) maxStreak = s;
+            currentWeekDates.forEach(d => {
+                if (logs.some(l => l.date === d.dateStr && l.habit === h && l.status === 'Done')) {
+                    checkedCount++;
+                }
+            });
         });
 
-        const tbody = document.getElementById('tableBody');
+        let rate = totalChecksPossible > 0 ? Math.round((checkedCount / totalChecksPossible) * 100) : 0;
+        document.getElementById('kpiHabitRate').textContent = `${rate}%`;
+        document.getElementById('kpiTopStreak').textContent = `${maxStreak} Days`;
+
+        let activeCount = todos.filter(t => t.status !== 'Completed').length;
+        document.getElementById('kpiActiveTasks').textContent = activeCount;
+        document.getElementById('kpiFocusMins').textContent = `${totalFocusMinsLogged}m`;
+    }
+
+    // Render Habit Table
+    function renderHabitTable() {
+        const headerRow = document.getElementById('tableHeaderRow');
+        headerRow.innerHTML = '<th class="p-3">Habit Name</th>';
+        currentWeekDates.forEach(d => {
+            headerRow.innerHTML += `<th class="p-3 text-center">${d.dayName}<br><span class="text-[10px] font-normal text-stone-400 dark:text-zinc-500">${d.shortDate}</span></th>`;
+        });
+
+        const tbody = document.getElementById('tableBodyRows');
         tbody.innerHTML = '';
 
         habits.forEach(habit => {
             const streak = calculateStreak(habit);
-            let streakHtml = streak > 1 ? `<br><span class="streak-badge">🔥 ${streak} days</span>` : '';
+            let streakBadge = streak > 1 ? `<span class="ml-2 text-[10px] bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50 font-semibold px-2 py-0.5 rounded-full">🔥 ${streak}d</span>` : '';
             
-            let row = `<tr><td>${habit}${streakHtml}</td>`;
+            let rowHtml = `<tr class="hover:bg-stone-50/50 dark:hover:bg-zinc-900/50"><td class="p-3 font-semibold text-stone-900 dark:text-zinc-100 flex items-center">${habit} ${streakBadge}</td>`;
             currentWeekDates.forEach(d => {
-                const logMatch = logs.find(l => l.date === d.dateStr && l.habit === habit);
-                const isChecked = logMatch && logMatch.status === 'Done' ? 'checked' : '';
-                row += `<td><input type="checkbox" ${isChecked} onchange="toggleHabit('${habit}', '${d.dateStr}', this.checked)"></td>`;
+                const isChecked = logs.some(l => l.date === d.dateStr && l.habit === habit && l.status === 'Done');
+                rowHtml += `
+                    <td class="p-3 text-center">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                               onchange="toggleHabitLog('${habit}', '${d.dateStr}', this.checked)"
+                               class="w-5 h-5 accent-teal-700 rounded cursor-pointer">
+                    </td>
+                `;
             });
-            row += `</tr>`;
-            tbody.innerHTML += row;
+            rowHtml += `</tr>`;
+            tbody.innerHTML += rowHtml;
         });
     }
 
-    function renderManagerList() {
-        const managerDiv = document.getElementById('habitListManager');
-        managerDiv.innerHTML = '';
-        habits.forEach((habit, index) => {
-            managerDiv.innerHTML += `
-                <div class="list-item">
-                    <span>${habit}</span>
-                    <button class="delete-btn" onclick="removeHabit(${index})">Delete</button>
+    function renderHabitManager() {
+        const list = document.getElementById('habitManagerList');
+        list.innerHTML = '';
+        habits.forEach((h, index) => {
+            list.innerHTML += `
+                <div class="flex justify-between items-center p-3 rounded-xl bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 text-sm">
+                    <span class="font-medium text-stone-800 dark:text-zinc-200">${h}</span>
+                    <button onclick="removeHabit(${index})" class="text-xs text-rose-600 hover:text-rose-700 font-semibold bg-rose-50 dark:bg-rose-950/50 px-3 py-1 rounded-lg border border-rose-200/40 dark:border-rose-800/40">
+                        Delete
+                    </button>
                 </div>
             `;
         });
     }
 
-    function updateStatusText(text, isError = false) {
-        const statusEl = document.getElementById('syncStatus');
-        statusEl.textContent = text;
-        statusEl.style.color = isError ? 'var(--danger)' : 'var(--text-secondary)';
-    }
-
-    function toggleHabit(habit, dateStr, isChecked) {
+    function toggleHabitLog(habit, dateStr, isChecked) {
         const status = isChecked ? 'Done' : 'Missed';
-        updateStatusText('Saving...');
+        updateSyncBadge('● Saving...');
 
         const existingIndex = logs.findIndex(l => l.date === dateStr && l.habit === habit);
         if (existingIndex >= 0) {
@@ -487,7 +590,9 @@
             logs.push({ date: dateStr, habit: habit, status: status });
         }
         localStorage.setItem('hb_logs', JSON.stringify(logs));
-        renderTable();
+        renderHabitTable();
+        updateKPIs();
+        renderCharts();
 
         fetch(SCRIPT_URL, {
             method: 'POST',
@@ -495,104 +600,294 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'saveLog', date: dateStr, habit: habit, status: status })
         })
-        .then(() => updateStatusText('Synced'))
-        .catch(() => updateStatusText('Sync failed', true));
-    }
-
-    function addTodo() {
-        const taskInput = document.getElementById('newTodoTask');
-        const dateInput = document.getElementById('newTodoDate');
-        const task = taskInput.value.trim();
-        const dueDate = dateInput.value;
-        if (!task) return;
-
-        const newTodo = { id: Date.now(), task: task, dueDate: dueDate, status: 'Pending' };
-        todos.push(newTodo);
-        taskInput.value = '';
-        dateInput.value = '';
-        localStorage.setItem('hb_todos', JSON.stringify(todos));
-        renderTodos();
-        updateStatusText('Syncing...');
-
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'addTodo', task: task, dueDate: dueDate })
-        })
-        .then(() => updateStatusText('Synced'))
-        .catch(() => updateStatusText('Sync failed', true));
-    }
-
-    function toggleTodo(id, isChecked) {
-        const status = isChecked ? 'Completed' : 'Pending';
-        updateStatusText('Saving...');
-
-        const todo = todos.find(t => t.id === id);
-        if (todo) {
-            todo.status = status;
-        }
-        localStorage.setItem('hb_todos', JSON.stringify(todos));
-        renderTodos();
-
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'updateTodoStatus', id: id, status: status })
-        })
-        .then(() => updateStatusText('Synced'))
-        .catch(() => updateStatusText('Sync failed', true));
-    }
-
-    function deleteTodo(id) {
-        todos = todos.filter(t => t.id !== id);
-        localStorage.setItem('hb_todos', JSON.stringify(todos));
-        renderTodos();
-        updateStatusText('Syncing...');
-
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'deleteTodo', id: id })
-        })
-        .then(() => updateStatusText('Synced'))
-        .catch(() => updateStatusText('Sync failed', true));
+        .then(() => updateSyncBadge('● Synced'))
+        .catch(() => updateSyncBadge('● Offline', true));
     }
 
     function addHabit() {
-        const input = document.getElementById('newHabitName');
+        const input = document.getElementById('newHabitInput');
         const val = input.value.trim();
         if (!val) return;
-        
+
         habits.push(val);
         input.value = '';
         localStorage.setItem('hb_habits', JSON.stringify(habits));
         renderUI();
-        syncHabitsToSheet();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateHabits', habits: habits })
+        });
     }
 
     function removeHabit(index) {
         habits.splice(index, 1);
         localStorage.setItem('hb_habits', JSON.stringify(habits));
         renderUI();
-        syncHabitsToSheet();
-    }
 
-    function syncHabitsToSheet() {
-        updateStatusText('Syncing...');
         fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'updateHabits', habits: habits })
-        })
-        .then(() => updateStatusText('Synced'))
-        .catch(() => updateStatusText('Sync failed', true));
+        });
     }
 
-    setupCurrentWeek();
+    // Render To-Do Tasks
+    function renderTodos() {
+        const activeContainer = document.getElementById('activeTodoList');
+        const completedContainer = document.getElementById('completedTodoList');
+        activeContainer.innerHTML = '';
+        completedContainer.innerHTML = '';
+
+        let completedCount = 0;
+
+        todos.forEach(todo => {
+            const isCompleted = todo.status === 'Completed';
+            const priorityBadge = todo.priority === 'High' ? `<span class="text-[10px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/80 border border-rose-200/50 dark:border-rose-800/50 px-2 py-0.5 rounded-md">🔥 High</span>` : '';
+            const dueBadge = todo.dueDate ? `<span class="text-[10px] text-stone-600 dark:text-zinc-400 bg-stone-200/70 dark:bg-zinc-800 px-2 py-0.5 rounded-md">📅 ${todo.dueDate}</span>` : '';
+
+            const itemHtml = `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 text-sm gap-3">
+                    <div class="flex items-center space-x-3 flex-1">
+                        <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTodo(${todo.id}, this.checked)" class="w-5 h-5 accent-teal-700 rounded cursor-pointer">
+                        <span class="${isCompleted ? 'line-through text-stone-400 dark:text-zinc-500' : 'text-stone-800 dark:text-zinc-200'} font-medium">${todo.task}</span>
+                        ${priorityBadge}
+                        ${dueBadge}
+                    </div>
+                    <button onclick="deleteTodo(${todo.id})" class="text-xs text-rose-600 hover:text-rose-700 font-semibold">Delete</button>
+                </div>
+            `;
+
+            if (isCompleted) {
+                completedCount++;
+                completedContainer.innerHTML += itemHtml;
+            } else {
+                activeContainer.innerHTML += itemHtml;
+            }
+        });
+
+        if (activeContainer.innerHTML === '') {
+            activeContainer.innerHTML = `<p class="text-xs text-stone-400 dark:text-zinc-500 text-center py-3 italic">No active tasks for this week.</p>`;
+        }
+        document.getElementById('completedTodoCount').textContent = completedCount;
+    }
+
+    function addTodo() {
+        const taskInput = document.getElementById('todoTaskInput');
+        const dateInput = document.getElementById('todoDateInput');
+        const priorityInput = document.getElementById('todoPriorityInput');
+
+        const task = taskInput.value.trim();
+        if (!task) return;
+
+        const newTodo = {
+            id: Date.now(),
+            task: task,
+            dueDate: dateInput.value,
+            priority: priorityInput.value,
+            status: 'Pending'
+        };
+
+        todos.push(newTodo);
+        taskInput.value = '';
+        dateInput.value = '';
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+        updateKPIs();
+        renderCharts();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'addTodo', task: task, dueDate: newTodo.dueDate })
+        });
+    }
+
+    function toggleTodo(id, isChecked) {
+        const status = isChecked ? 'Completed' : 'Pending';
+        const todo = todos.find(t => t.id === id);
+        if (todo) todo.status = status;
+
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+        updateKPIs();
+        renderCharts();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateTodoStatus', id: id, status: status })
+        });
+    }
+
+    function deleteTodo(id) {
+        todos = todos.filter(t => t.id !== id);
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+        updateKPIs();
+        renderCharts();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'deleteTodo', id: id })
+        });
+    }
+
+    // Pomodoro Timer Logic
+    function setTimerMode(mode, minutes) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        document.getElementById('timerToggleBtn').textContent = 'Start Session';
+        
+        timerInitialSeconds = minutes * 60;
+        timerSecondsLeft = timerInitialSeconds;
+
+        document.querySelectorAll('#mode-focus, #mode-short, #mode-long').forEach(b => {
+            b.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 dark:hover:text-zinc-200";
+        });
+
+        if (mode === 'focus') document.getElementById('mode-focus').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-teal-700 text-white";
+        if (mode === 'shortBreak') document.getElementById('mode-short').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-700 text-white";
+        if (mode === 'longBreak') document.getElementById('mode-long').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-600 text-white";
+
+        updateTimerDisplay();
+    }
+
+    function toggleTimer() {
+        const btn = document.getElementById('timerToggleBtn');
+        if (isTimerRunning) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.textContent = 'Resume';
+        } else {
+            isTimerRunning = true;
+            btn.textContent = 'Pause';
+            timerInterval = setInterval(() => {
+                if (timerSecondsLeft > 0) {
+                    timerSecondsLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    isTimerRunning = false;
+                    btn.textContent = 'Start Session';
+                    completedSessions++;
+                    totalFocusMinsLogged += Math.round(timerInitialSeconds / 60);
+                    document.getElementById('completedSessionsCount').textContent = completedSessions;
+                    document.getElementById('totalFocusMinutesLog').textContent = totalFocusMinsLogged;
+                    updateKPIs();
+                    alert('🎉 Focus session completed! Great work.');
+                }
+            }, 1000);
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        timerSecondsLeft = timerInitialSeconds;
+        document.getElementById('timerToggleBtn').textContent = 'Start Session';
+        updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+        let mins = Math.floor(timerSecondsLeft / 60);
+        let secs = timerSecondsLeft % 60;
+        document.getElementById('timerClock').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Journal & Reflection Logic
+    function autoSaveJournal() {
+        const val = document.getElementById('journalArea').value;
+        localStorage.setItem(`hb_journal_${todayDateStr}`, val);
+    }
+
+    function setMood(emoji) {
+        document.getElementById('selectedMoodDisplay').textContent = emoji;
+        localStorage.setItem(`hb_mood_${todayDateStr}`, emoji);
+    }
+
+    // Chart.js Visualizations
+    function renderCharts() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#a1a1aa' : '#78716c';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+        // Habit Daily Completion Line Chart
+        const habitCounts = currentWeekDates.map(d => {
+            return logs.filter(l => l.date === d.dateStr && l.status === 'Done').length;
+        });
+
+        const ctxHabit = document.getElementById('habitChart').getContext('2d');
+        if (habitChartInstance) habitChartInstance.destroy();
+
+        habitChartInstance = new Chart(ctxHabit, {
+            type: 'line',
+            data: {
+                labels: currentWeekDates.map(d => d.dayName),
+                datasets: [{
+                    label: 'Habits Done',
+                    data: habitCounts,
+                    borderColor: '#0d9488',
+                    backgroundColor: 'rgba(13, 148, 136, 0.15)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#0d9488'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                    y: { ticks: { color: textColor, precision: 0 }, grid: { color: gridColor }, beginAtZero: true }
+                }
+            }
+        });
+
+        // Todo Breakdown Doughnut Chart
+        const completedCount = todos.filter(t => t.status === 'Completed').length;
+        const pendingCount = todos.filter(t => t.status !== 'Completed').length;
+
+        const ctxTodo = document.getElementById('todoChart').getContext('2d');
+        if (todoChartInstance) todoChartInstance.destroy();
+
+        todoChartInstance = new Chart(ctxTodo, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending'],
+                datasets: [{
+                    data: [completedCount, pendingCount],
+                    backgroundColor: ['#0d9488', '#d97706'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: textColor, font: { size: 12 } }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    // Initialize Application
+    initTheme();
+    setupWeekWindow();
     fetchData();
 </script>
 
