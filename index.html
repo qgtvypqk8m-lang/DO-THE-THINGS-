@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cross-Device Habit Tracker</title>
+    <title>Life Dashboard & Habit Tracker</title>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Habits">
+    <meta name="apple-mobile-web-app-title" content="Dashboard">
     <style>
         :root {
             --bg-color: #f8fafc;
@@ -37,6 +37,7 @@
             padding: 16px;
             border-radius: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 20px;
         }
 
         .header-flex {
@@ -136,28 +137,30 @@
             font-weight: bold;
         }
 
-        .manager-section {
+        .manager-section, .todo-section {
             margin-top: 24px;
             border-top: 1px solid var(--border);
             padding-top: 16px;
         }
 
-        .habit-input-group {
+        .input-group {
             display: flex;
             gap: 8px;
             margin-bottom: 12px;
+            flex-wrap: wrap;
         }
 
-        input[type="text"] {
+        input[type="text"], input[type="date"] {
             flex: 1;
             padding: 10px 12px;
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 0.9rem;
             outline: none;
+            min-width: 140px;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus, input[type="date"]:focus {
             border-color: var(--accent);
         }
 
@@ -177,16 +180,33 @@
             background: var(--accent-hover);
         }
 
-        .habit-list-item {
+        .list-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 12px;
+            padding: 10px 12px;
             background: #f8fafc;
             margin-bottom: 6px;
             border-radius: 8px;
             border: 1px solid var(--border);
             font-size: 0.9rem;
+            gap: 10px;
+        }
+
+        .list-item-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .todo-due {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
         }
 
         .delete-btn {
@@ -196,8 +216,19 @@
             font-size: 0.75rem;
         }
 
-        .delete-btn:active {
-            background: #fecaca;
+        details {
+            margin-top: 15px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        summary {
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         #loading {
@@ -212,12 +243,13 @@
 
 <div class="container">
     <div class="header-flex">
-        <h2>Habit Tracker</h2>
+        <h2>Weekly Habit Tracker</h2>
         <div id="syncStatus" class="sync-status">Synced</div>
     </div>
     
-    <div id="loading">Loading your habits...</div>
+    <div id="loading">Loading your data...</div>
     
+    <!-- HABITS TABLE -->
     <div class="table-responsive">
         <table id="habitTable" style="display:none;">
             <thead>
@@ -225,29 +257,48 @@
                     <th>Habit</th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
-                <!-- Dynamically populated -->
-            </tbody>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 
+    <!-- TO-DO LIST SECTION -->
+    <div class="todo-section">
+        <h3>Weekly To-Do List</h3>
+        <div class="input-group">
+            <input type="text" id="newTodoTask" placeholder="Task name (e.g., Buy carrots)...">
+            <input type="date" id="newTodoDate">
+            <button onclick="addTodo()">Add Task</button>
+        </div>
+        
+        <div id="todoListActive">
+            <!-- Active Todos for the week -->
+        </div>
+
+        <details>
+            <summary>Completed Tasks (<span id="completedCount">0</span>)</summary>
+            <div id="todoListCompleted" style="margin-top: 10px;">
+                <!-- Completed Todos dropdown list -->
+            </div>
+        </details>
+    </div>
+
+    <!-- HABIT MANAGER SECTION -->
     <div class="manager-section">
         <h3>Manage Habits</h3>
-        <div class="habit-input-group">
+        <div class="input-group">
             <input type="text" id="newHabitName" placeholder="New habit name...">
-            <button onclick="addHabit()">Add</button>
+            <button onclick="addHabit()">Add Habit</button>
         </div>
-        <div id="habitListManager">
-            <!-- Habit management list -->
-        </div>
+        <div id="habitListManager"></div>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZPhqx83nxQ9AVeyj6XZhavlSP4H3fISfnIjjHTi9egtls8km71Xzhr33wKSeOpry4/exec';
     
-    let habits = ["Drink Water", "Exercise", "Reading"]; // Default fallback
+    let habits = ["Drink Water", "Exercise", "Reading"];
     let logs = [];
+    let todos = [];
     let currentWeekDates = [];
 
     function setupCurrentWeek() {
@@ -266,16 +317,15 @@
     }
 
     function fetchData() {
-        // Fallback to local storage cache if available
         const cachedHabits = localStorage.getItem('hb_habits');
         const cachedLogs = localStorage.getItem('hb_logs');
+        const cachedTodos = localStorage.getItem('hb_todos');
         if (cachedHabits) habits = JSON.parse(cachedHabits);
         if (cachedLogs) logs = JSON.parse(cachedLogs);
+        if (cachedTodos) todos = JSON.parse(cachedTodos);
         
-        // Show UI immediately using fallback/cache so it never gets stuck loading
         showUI();
 
-        // Fetch fresh data from Google Sheet in background
         fetch(SCRIPT_URL, { method: 'GET', mode: 'cors' })
             .then(res => res.json())
             .then(data => {
@@ -287,10 +337,14 @@
                     logs = data.logs;
                     localStorage.setItem('hb_logs', JSON.stringify(logs));
                 }
+                if (data.todos) {
+                    todos = data.todos;
+                    localStorage.setItem('hb_todos', JSON.stringify(todos));
+                }
                 renderUI();
             })
             .catch(err => {
-                console.log('Using offline/cached data due to fetch restriction:', err);
+                console.log('Using offline cache:', err);
             });
     }
 
@@ -303,17 +357,69 @@
     function renderUI() {
         renderTable();
         renderManagerList();
+        renderTodos();
+    }
+
+    // Check if a date string falls within the current Monday-Sunday window
+    function isDateInCurrentWeek(dateStr) {
+        if (!dateStr) return true; // If no due date, keep it visible in current week
+        const startStr = currentWeekDates[0].dateStr;
+        const endStr = currentWeekDates[6].dateStr;
+        return dateStr >= startStr && dateStr <= endStr;
+    }
+
+    function renderTodos() {
+        const activeDiv = document.getElementById('todoListActive');
+        const completedDiv = document.getElementById('todoListCompleted');
+        activeDiv.innerHTML = '';
+        completedDiv.innerHTML = '';
+        
+        let completedCount = 0;
+        let activeHtml = '';
+        let completedHtml = '';
+
+        todos.forEach(todo => {
+            const isCompleted = todo.status === 'Completed';
+            const belongsToCurrentWeek = isDateInCurrentWeek(todo.dueDate);
+
+            if (isCompleted) {
+                completedCount++;
+                completedHtml += `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <input type="checkbox" checked onchange="toggleTodo(${todo.id}, this.checked)">
+                            <span style="text-decoration: line-through; color: var(--text-secondary);">${todo.task}</span>
+                            ${todo.dueDate ? `<span class="todo-due">${todo.dueDate}</span>` : ''}
+                        </div>
+                        <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+                    </div>
+                `;
+            } else if (belongsToCurrentWeek) {
+                activeHtml += `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <input type="checkbox" onchange="toggleTodo(${todo.id}, this.checked)">
+                            <span>${todo.task}</span>
+                            ${todo.dueDate ? `<span class="todo-due">${todo.dueDate}</span>` : ''}
+                        </div>
+                        <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+                    </div>
+                `;
+            }
+        });
+
+        activeDiv.innerHTML = activeHtml || '<p style="font-size:0.85rem; color:var(--text-secondary); text-align:center; margin:10px 0;">No active tasks for this week.</p>';
+        completedDiv.innerHTML = completedHtml || '<p style="font-size:0.85rem; color:var(--text-secondary); text-align:center; margin:5px 0;">No completed tasks.</p>';
+        document.getElementById('completedCount').textContent = completedCount;
     }
 
     function calculateStreak(habitName) {
         let streak = 0;
         const today = new Date();
-        
         for (let i = 0; i < 60; i++) {
             let d = new Date();
             d.setDate(today.getDate() - i);
             let dateStr = d.toISOString().split('T')[0];
-            
             let log = logs.find(l => l.date === dateStr && l.habit === habitName);
             if (log && log.status === 'Done') {
                 streak++;
@@ -356,7 +462,7 @@
         managerDiv.innerHTML = '';
         habits.forEach((habit, index) => {
             managerDiv.innerHTML += `
-                <div class="habit-list-item">
+                <div class="list-item">
                     <span>${habit}</span>
                     <button class="delete-btn" onclick="removeHabit(${index})">Delete</button>
                 </div>
@@ -388,6 +494,68 @@
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'saveLog', date: dateStr, habit: habit, status: status })
+        })
+        .then(() => updateStatusText('Synced'))
+        .catch(() => updateStatusText('Sync failed', true));
+    }
+
+    function addTodo() {
+        const taskInput = document.getElementById('newTodoTask');
+        const dateInput = document.getElementById('newTodoDate');
+        const task = taskInput.value.trim();
+        const dueDate = dateInput.value;
+        if (!task) return;
+
+        const newTodo = { id: Date.now(), task: task, dueDate: dueDate, status: 'Pending' };
+        todos.push(newTodo);
+        taskInput.value = '';
+        dateInput.value = '';
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+        updateStatusText('Syncing...');
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'addTodo', task: task, dueDate: dueDate })
+        })
+        .then(() => updateStatusText('Synced'))
+        .catch(() => updateStatusText('Sync failed', true));
+    }
+
+    function toggleTodo(id, isChecked) {
+        const status = isChecked ? 'Completed' : 'Pending';
+        updateStatusText('Saving...');
+
+        const todo = todos.find(t => t.id === id);
+        if (todo) {
+            todo.status = status;
+        }
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateTodoStatus', id: id, status: status })
+        })
+        .then(() => updateStatusText('Synced'))
+        .catch(() => updateStatusText('Sync failed', true));
+    }
+
+    function deleteTodo(id) {
+        todos = todos.filter(t => t.id !== id);
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+        updateStatusText('Syncing...');
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'deleteTodo', id: id })
         })
         .then(() => updateStatusText('Synced'))
         .catch(() => updateStatusText('Sync failed', true));
