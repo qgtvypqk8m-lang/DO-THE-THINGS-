@@ -63,7 +63,24 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200 antialiased font-sans">
 
-<div id="app" class="max-w-6xl mx-auto px-4 py-6 sm:px-6">
+<!-- PASSWORD PROTECTION GATE -->
+<div id="authOverlay" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-sm w-full text-center shadow-xl">
+        <span class="text-3xl mb-2 block">🔒</span>
+        <h2 class="text-lg font-bold text-slate-100 mb-1">Protected Workspace</h2>
+        <p class="text-xs text-slate-400 mb-4">Enter your passcode to unlock DO-THE-THINGS.</p>
+        <input type="password" id="passcodeBox" placeholder="Enter PIN or Password" 
+               class="w-full px-3 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-slate-100 text-sm mb-3 focus:outline-none focus:border-indigo-600 text-center tracking-widest"
+               onkeypress="handlePasswordKey(event)">
+        <button onclick="checkPassword()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition-all shadow-md shadow-indigo-600/20">
+            Unlock Command Center
+        </button>
+        <p id="authErrorMsg" class="text-xs text-rose-500 mt-3 hidden">Incorrect passcode. Try again.</p>
+        <p class="text-[10px] text-slate-500 mt-4 italic">Default PIN: 1234 (You can change this in the script code)</p>
+    </div>
+</div>
+
+<div id="app" class="max-w-6xl mx-auto px-4 py-6 sm:px-6 hidden">
 
     <!-- TOP NAV BAR -->
     <header class="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 shadow-sm gap-4">
@@ -379,6 +396,7 @@
 <script>
     // Configuration & State
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZPhqx83nxQ9AVeyj6XZhavlSP4H3fISfnIjjHTi9egtls8km71Xzhr33wKSeOpry4/exec';
+    const APP_PASSWORD = "1234"; // Change this PIN to whatever you prefer
 
     let habits = ["Drink Water", "Exercise", "Reading 15 mins", "Deep Work"];
     let logs = [];
@@ -405,6 +423,27 @@
     let isTimerRunning = false;
     let completedSessions = 0;
     let totalFocusMinsLogged = 0;
+
+    // Password Gate Logic
+    function checkPassword() {
+        const inputVal = document.getElementById('passcodeBox').value;
+        const errorMsg = document.getElementById('authErrorMsg');
+
+        if (inputVal === APP_PASSWORD) {
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            sessionStorage.setItem('unlocked', 'true');
+        } else {
+            errorMsg.classList.remove('hidden');
+            document.getElementById('passcodeBox').value = '';
+        }
+    }
+
+    function handlePasswordKey(e) {
+        if (e.key === 'Enter') {
+            checkPassword();
+        }
+    }
 
     // Dark Mode Initialization
     function initTheme() {
@@ -714,7 +753,6 @@
     }
 
     function toggleHabitLog(habit, dateStr, isChecked) {
-        // Correctly sets status to 'Done' when checked, or 'Missed' when unchecked
         const status = isChecked ? 'Done' : 'Missed';
         updateSyncBadge('● Saving...');
 
@@ -989,7 +1027,27 @@
     // Initialize Application
     initTheme();
     setupWeekWindow();
-    fetchData();
+
+    // Session Unlock check on load
+    window.addEventListener('DOMContentLoaded', () => {
+        if (sessionStorage.getItem('unlocked') === 'true') {
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            fetchData();
+        } else {
+            // Focus password box automatically
+            document.getElementById('passcodeBox').focus();
+        }
+    });
+
+    // Also trigger fetchData once unlocked via button
+    const originalCheckPassword = checkPassword;
+    window.checkPassword = function() {
+        originalCheckPassword();
+        if (sessionStorage.getItem('unlocked') === 'true') {
+            fetchData();
+        }
+    }
 </script>
 
 </body>
