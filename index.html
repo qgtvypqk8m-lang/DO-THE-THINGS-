@@ -1,5 +1,720 @@
-function toggleHabitLog(habit, dateStr, isChecked) {
-        // If checked, status is 'Done'. If unchecked, status is 'Missed' (or blank/removed)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DO-THE-THINGS - Personal Command Center</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for canvas visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 260px;
+            max-height: 320px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 280px;
+            }
+        }
+        /* Custom scrollbars for clean UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.04);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(161, 161, 170, 0.4);
+            border-radius: 9999px;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.04);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200 antialiased font-sans">
+
+<div id="app" class="max-w-6xl mx-auto px-4 py-6 sm:px-6">
+
+    <!-- TOP NAV BAR -->
+    <header class="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 shadow-sm gap-4">
+        <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">⚡</span>
+                <div>
+                    <h1 class="font-extrabold text-xl sm:text-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 dark:from-indigo-400 dark:via-indigo-300 dark:to-violet-400 bg-clip-text text-transparent uppercase tracking-wider">DO-THE-THINGS</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium" id="headerDateStr">Today</p>
+                </div>
+            </div>
+            <!-- Mobile theme toggle -->
+            <button onclick="toggleDarkMode()" class="sm:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">
+                <span id="themeIconMobile">🌙</span>
+            </button>
+        </div>
+
+        <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+            <div id="syncBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 transition-colors">
+                ● Synced
+            </div>
+            <button onclick="toggleDarkMode()" class="hidden sm:block p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm transition-colors text-slate-600 dark:text-slate-300 font-medium">
+                <span id="themeIconDesktop">🌙 Light / Dark</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="flex space-x-2 overflow-x-auto pb-2 mb-6 scrollbar-none" id="mainNav">
+        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+            📊 Overview & Actions
+        </button>
+        <button onclick="switchTab('habits')" id="tab-habits" class="nav-tab px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+            🎯 Habits & Routines
+        </button>
+        <button onclick="switchTab('quotes')" id="tab-quotes" class="nav-tab px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+            💬 Quotes & Motivation
+        </button>
+        <button onclick="switchTab('focus')" id="tab-focus" class="nav-tab px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+            ⏳ Deep Work Timer
+        </button>
+        <button onclick="switchTab('journal')" id="tab-journal" class="nav-tab px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+            📓 Daily Reflection
+        </button>
+    </nav>
+
+    <!-- LOADING PLACEHOLDER -->
+    <div id="loadingState" class="text-center py-12 text-slate-500 dark:text-slate-400 font-medium italic">
+        Loading DO-THE-THINGS workspace...
+    </div>
+
+    <!-- VIEW 1: OVERVIEW & ACTION CENTER -->
+    <main id="view-overview" class="tab-content hidden space-y-6">
+        
+        <!-- DAILY QUOTE BANNER -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm text-white relative overflow-hidden">
+            <div class="flex justify-between items-start">
+                <span class="text-xs font-bold uppercase tracking-widest text-indigo-400">Daily Inspiration</span>
+                <button onclick="switchTab('quotes')" class="text-[11px] text-slate-300 hover:text-indigo-300 underline bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">
+                    Change / Manage Quotes ✏️
+                </button>
+            </div>
+            <div class="mt-3 mb-1">
+                <p id="activeQuoteText" class="text-lg sm:text-xl font-medium italic leading-relaxed text-slate-100">
+                    "Do the things even when you don't feel like doing them."
+                </p>
+                <p id="activeQuoteAuthor" class="text-xs sm:text-sm font-semibold text-indigo-400 mt-2 text-right">
+                    — Unknown
+                </p>
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Weekly Habit Rate</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1" id="kpiHabitRate">0%</div>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500">Current 7-day window</span>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Active Tasks</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-500 mt-1" id="kpiActiveTasks">0</div>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500">Pending action items</span>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Longest Streak</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-1" id="kpiTopStreak">0 Days</div>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500">Habit momentum</span>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Focus Minutes</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-violet-600 dark:text-violet-400 mt-1" id="kpiFocusMins">0m</div>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500">Logged today</span>
+            </div>
+        </div>
+
+        <!-- MAIN DASHBOARD CONTENT GRID (To-Do on left, Habit Chart on right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- EMBEDDED TO-DO ACTION CENTER -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="pb-3 border-b border-slate-100 dark:border-slate-800 mb-4 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base">Weekly To-Do List</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Add & complete tasks directly from your overview.</p>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                            Action Center
+                        </span>
+                    </div>
+
+                    <!-- Quick Task Input Form -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 mb-4">
+                        <input type="text" id="todoTaskInput" placeholder="What needs to get done?" 
+                               class="sm:col-span-6 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-600">
+                        
+                        <input type="date" id="todoDateInput" 
+                               class="sm:col-span-3 px-2 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-600">
+                        
+                        <select id="todoPriorityInput" class="sm:col-span-3 px-2 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-600">
+                            <option value="Normal">Normal</option>
+                            <option value="High">🔥 High</option>
+                        </select>
+                    </div>
+                    <button onclick="addTodo()" class="w-full mb-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition-all shadow-md shadow-indigo-600/20">
+                        + Add New Action Item
+                    </button>
+
+                    <!-- Active Tasks Scroll Container -->
+                    <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                        <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Pending Tasks</h4>
+                        <div id="activeTodoList" class="space-y-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completed Tasks Accordion Footer -->
+                <details class="group mt-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 transition-all">
+                    <summary class="font-semibold text-xs text-slate-600 dark:text-slate-400 cursor-pointer flex justify-between items-center select-none">
+                        <span>Completed Tasks (<span id="completedTodoCount">0</span>)</span>
+                        <span class="text-[10px] transition-transform group-open:rotate-180">▼</span>
+                    </summary>
+                    <div id="completedTodoList" class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2 max-h-40 overflow-y-auto">
+                        <!-- Populated dynamically -->
+                    </div>
+                </details>
+            </div>
+
+            <!-- Habit Line Chart -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-slate-900 dark:text-slate-100 mb-1 text-sm sm:text-base">Daily Check-in Progression</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Total completed habits logged each day this week.</p>
+                <div class="chart-container">
+                    <canvas id="habitChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- VIEW 2: HABITS & ROUTINES -->
+    <main id="view-habits" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center pb-4 border-b border-slate-100 dark:border-slate-800 gap-2 mb-4">
+                <div>
+                    <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100">Weekly Habit Tracker</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Mark off habits for the current week. Streaks update automatically.</p>
+                </div>
+                <div class="text-xs font-semibold px-3 py-1 bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 rounded-lg border border-amber-200/60 dark:border-amber-800/60 w-fit">
+                    🔥 Active Streaks Enabled
+                </div>
+            </div>
+
+            <!-- Responsive Table Container -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[550px]" id="habitMatrixTable">
+                    <thead>
+                        <tr id="tableHeaderRow" class="border-b border-slate-200 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            <th class="p-3">Habit Name</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyRows" class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Habit Manager Section -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-base text-slate-900 dark:text-slate-100 mb-3">Manage Your Habit Stack</h3>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="newHabitInput" placeholder="Add a new habit (e.g., Read 15 mins)..." 
+                       class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-600">
+                <button onclick="addHabit()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-indigo-600/20">
+                    Add Habit
+                </button>
+            </div>
+
+            <div id="habitManagerList" class="space-y-2">
+                <!-- Habit items list -->
+            </div>
+        </div>
+    </main>
+
+    <!-- VIEW 3: QUOTES & MOTIVATION -->
+    <main id="view-quotes" class="tab-content hidden space-y-6">
+        <!-- Active Quote Editor -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100">Daily Quote & Motivation Manager</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Set the active quote displayed at the top of your overview, or save quotes for your inspiration library.</p>
+            </div>
+
+            <div class="space-y-3 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Quote Text</label>
+                    <textarea id="inputQuoteText" placeholder="Enter quote text..." rows="2" 
+                              class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-600"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Author / Source</label>
+                    <input type="text" id="inputQuoteAuthor" placeholder="Author name (e.g., Marcus Aurelius)" 
+                           class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-600">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="saveActiveQuote()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-indigo-600/20">
+                        Set as Active Quote
+                    </button>
+                    <button onclick="addQuoteToHistoryOnly()" class="px-4 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl transition-all">
+                        Save to Library
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Quotes History Library -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-base text-slate-900 dark:text-slate-100 mb-3">Quote History & Saved Library</h3>
+            <div id="quoteHistoryList" class="space-y-3">
+                <!-- Quotes history cards rendered dynamically -->
+            </div>
+        </div>
+    </main>
+
+    <!-- VIEW 4: DEEP WORK TIMER -->
+    <main id="view-focus" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm text-center max-w-xl mx-auto">
+            <h2 class="font-bold text-xl text-slate-900 dark:text-slate-100 mb-1">Deep Work & Focus Timer</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Use structured focus intervals to eliminate distraction and build deep work momentum.</p>
+
+            <!-- Mode Selector Buttons -->
+            <div class="flex justify-center space-x-2 mb-8 bg-slate-100 dark:bg-slate-950 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 max-w-xs mx-auto">
+                <button onclick="setTimerMode('focus', 25)" id="mode-focus" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white">Focus (25m)</button>
+                <button onclick="setTimerMode('shortBreak', 5)" id="mode-short" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-900 dark:hover:text-slate-200">Short (5m)</button>
+                <button onclick="setTimerMode('longBreak', 15)" id="mode-long" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-900 dark:hover:text-slate-200">Long (15m)</button>
+            </div>
+
+            <!-- Giant Clock Display -->
+            <div id="timerClock" class="text-6xl sm:text-7xl font-black text-indigo-600 dark:text-indigo-400 tracking-widest my-6 font-mono">
+                25:00
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="flex justify-center items-center space-x-4">
+                <button onclick="toggleTimer()" id="timerToggleBtn" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/25 text-base">
+                    Start Session
+                </button>
+                <button onclick="resetTimer()" class="px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xl text-sm transition-all">
+                    Reset
+                </button>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-around text-xs text-slate-500 dark:text-slate-400">
+                <div>Completed Today: <span id="completedSessionsCount" class="font-bold text-slate-900 dark:text-slate-100">0</span> sessions</div>
+                <div>Total Minutes: <span id="totalFocusMinutesLog" class="font-bold text-indigo-600 dark:text-indigo-400">0</span> mins</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- VIEW 5: DAILY REFLECTION / JOURNAL -->
+    <main id="view-journal" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="pb-4 border-b border-slate-100 dark:border-slate-800 mb-4 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                <div>
+                    <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100">Daily Brain Dump & Journal</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Capture quick thoughts, key wins, or ideas for today (<span id="journalDateLabel"></span>).</p>
+                </div>
+                <!-- Mood Tracker -->
+                <div class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Mood:</span>
+                    <button onclick="setMood('🤩')" class="mood-btn hover:scale-125 transition-transform text-lg">🤩</button>
+                    <button onclick="setMood('🙂')" class="mood-btn hover:scale-125 transition-transform text-lg">🙂</button>
+                    <button onclick="setMood('😐')" class="mood-btn hover:scale-125 transition-transform text-lg">😐</button>
+                    <button onclick="setMood('😴')" class="mood-btn hover:scale-125 transition-transform text-lg">😴</button>
+                    <button onclick="setMood('🔥')" class="mood-btn hover:scale-125 transition-transform text-lg">🔥</button>
+                    <span id="selectedMoodDisplay" class="text-sm font-bold ml-1"></span>
+                </div>
+            </div>
+
+            <textarea id="journalArea" oninput="autoSaveJournal()" placeholder="What went well today? What are you focusing on next? (Auto-saves locally)..." 
+                      class="w-full h-48 sm:h-64 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-600 leading-relaxed resize-y"></textarea>
+            
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-2 text-right">Autosaved to local storage</p>
+        </div>
+    </main>
+
+</div>
+
+<!-- JAVASCRIPT APPLICATION LOGIC -->
+<script>
+    // Configuration & State
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZPhqx83nxQ9AVeyj6XZhavlSP4H3fISfnIjjHTi9egtls8km71Xzhr33wKSeOpry4/exec';
+
+    let habits = ["Drink Water", "Exercise", "Reading 15 mins", "Deep Work"];
+    let logs = [];
+    let todos = [];
+    let currentWeekDates = [];
+    let todayDateStr = new Date().toISOString().split('T')[0];
+
+    // Quote state
+    let activeQuote = {
+        text: "Do the things even when you don't feel like doing them.",
+        author: "Unknown"
+    };
+    let quoteHistory = [
+        { id: 1, text: "Do the things even when you don't feel like doing them.", author: "Unknown", date: todayDateStr },
+        { id: 2, text: "The secret of getting ahead is getting started.", author: "Mark Twain", date: todayDateStr }
+    ];
+
+    let habitChartInstance = null;
+
+    // Timer variables
+    let timerInterval = null;
+    let timerSecondsLeft = 25 * 60;
+    let timerInitialSeconds = 25 * 60;
+    let isTimerRunning = false;
+    let completedSessions = 0;
+    let totalFocusMinsLogged = 0;
+
+    // Dark Mode Initialization
+    function initTheme() {
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }
+
+    function toggleDarkMode() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        renderCharts();
+    }
+
+    // Date setup (Monday - Sunday)
+    function setupWeekWindow() {
+        const curr = new Date();
+        const first = curr.getDate() - curr.getDay() + (curr.getDay() === 0 ? -6 : 1);
+        
+        currentWeekDates = [];
+        for (let i = 0; i < 7; i++) {
+            let nextDay = new Date(new Date().setDate(first + i));
+            currentWeekDates.push({
+                dateStr: nextDay.toISOString().split('T')[0],
+                dayName: nextDay.toLocaleDateString('en-US', { weekday: 'short' }),
+                shortDate: `${nextDay.getMonth() + 1}/${nextDay.getDate()}`
+            });
+        }
+
+        const dateOptions = { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' };
+        document.getElementById('headerDateStr').textContent = curr.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('journalDateLabel').textContent = curr.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // Tab Navigation
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.nav-tab').forEach(el => {
+            el.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
+            el.classList.add('bg-white', 'dark:bg-slate-900', 'border', 'border-slate-200', 'dark:border-slate-800', 'text-slate-600', 'dark:text-slate-400');
+        });
+
+        document.getElementById(`view-${tabId}`).classList.remove('hidden');
+        const activeBtn = document.getElementById(`tab-${tabId}`);
+        activeBtn.classList.remove('bg-white', 'dark:bg-slate-900', 'border', 'border-slate-200', 'dark:border-slate-800', 'text-slate-600', 'dark:text-slate-400');
+        activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
+
+        if (tabId === 'overview') {
+            renderCharts();
+        }
+    }
+
+    // Data Fetching & Sync
+    function fetchData() {
+        const cachedHabits = localStorage.getItem('hb_habits');
+        const cachedLogs = localStorage.getItem('hb_logs');
+        const cachedTodos = localStorage.getItem('hb_todos');
+        const cachedJournal = localStorage.getItem(`hb_journal_${todayDateStr}`);
+        const cachedMood = localStorage.getItem(`hb_mood_${todayDateStr}`);
+        const cachedActiveQuote = localStorage.getItem('hb_active_quote');
+        const cachedQuoteHistory = localStorage.getItem('hb_quote_history');
+
+        if (cachedHabits) habits = JSON.parse(cachedHabits);
+        if (cachedLogs) logs = JSON.parse(cachedLogs);
+        if (cachedTodos) todos = JSON.parse(cachedTodos);
+        if (cachedJournal) document.getElementById('journalArea').value = cachedJournal;
+        if (cachedMood) document.getElementById('selectedMoodDisplay').textContent = cachedMood;
+        if (cachedActiveQuote) activeQuote = JSON.parse(cachedActiveQuote);
+        if (cachedQuoteHistory) quoteHistory = JSON.parse(cachedQuoteHistory);
+
+        showUI();
+
+        fetch(SCRIPT_URL, { method: 'GET', mode: 'cors' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.habits && data.habits.length > 0) {
+                    habits = data.habits;
+                    localStorage.setItem('hb_habits', JSON.stringify(habits));
+                }
+                if (data.logs) {
+                    logs = data.logs;
+                    localStorage.setItem('hb_logs', JSON.stringify(logs));
+                }
+                if (data.todos) {
+                    todos = data.todos;
+                    localStorage.setItem('hb_todos', JSON.stringify(todos));
+                }
+                renderUI();
+            })
+            .catch(err => {
+                console.log('Using offline cache:', err);
+                renderUI();
+            });
+    }
+
+    function showUI() {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('view-overview').classList.remove('hidden');
+        renderUI();
+    }
+
+    function renderUI() {
+        renderQuoteDisplay();
+        renderQuoteHistory();
+        renderHabitTable();
+        renderHabitManager();
+        renderTodos();
+        updateKPIs();
+        renderCharts();
+    }
+
+    function updateSyncBadge(statusText, isError = false) {
+        const badge = document.getElementById('syncBadge');
+        badge.textContent = statusText;
+        if (isError) {
+            badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60";
+        } else {
+            badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60";
+        }
+    }
+
+    // Quote Management Logic
+    function renderQuoteDisplay() {
+        document.getElementById('activeQuoteText').textContent = `"${activeQuote.text}"`;
+        document.getElementById('activeQuoteAuthor').textContent = `— ${activeQuote.author || 'Unknown'}`;
+    }
+
+    function renderQuoteHistory() {
+        const historyContainer = document.getElementById('quoteHistoryList');
+        historyContainer.innerHTML = '';
+
+        quoteHistory.forEach((q, idx) => {
+            const isActive = q.text === activeQuote.text && q.author === activeQuote.author;
+            historyContainer.innerHTML += `
+                <div class="p-3.5 rounded-xl border ${isActive ? 'bg-indigo-50/50 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-800' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'} text-sm flex flex-col justify-between gap-2">
+                    <div>
+                        <p class="italic text-slate-800 dark:text-slate-200 font-medium">"${q.text}"</p>
+                        <p class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">— ${q.author || 'Unknown'}</p>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-200/60 dark:border-slate-800/60 text-xs">
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500">${q.date || 'Saved'}</span>
+                        <div class="flex space-x-2">
+                            ${!isActive ? `<button onclick="setActiveFromHistory(${idx})" class="px-2.5 py-1 bg-indigo-600 text-white font-semibold rounded-lg text-xs">Set Active</button>` : `<span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Active</span>`}
+                            <button onclick="deleteQuoteFromHistory(${idx})" class="px-2 py-1 text-rose-600 font-semibold hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function saveActiveQuote() {
+        const textInput = document.getElementById('inputQuoteText');
+        const authorInput = document.getElementById('inputQuoteAuthor');
+
+        const text = textInput.value.trim();
+        const author = authorInput.value.trim() || 'Unknown';
+
+        if (!text) return;
+
+        activeQuote = { text: text, author: author };
+        localStorage.setItem('hb_active_quote', JSON.stringify(activeQuote));
+
+        if (!quoteHistory.some(q => q.text === text)) {
+            quoteHistory.unshift({ id: Date.now(), text: text, author: author, date: todayDateStr });
+            localStorage.setItem('hb_quote_history', JSON.stringify(quoteHistory));
+        }
+
+        textInput.value = '';
+        authorInput.value = '';
+
+        renderQuoteDisplay();
+        renderQuoteHistory();
+        switchTab('overview');
+    }
+
+    function addQuoteToHistoryOnly() {
+        const textInput = document.getElementById('inputQuoteText');
+        const authorInput = document.getElementById('inputQuoteAuthor');
+
+        const text = textInput.value.trim();
+        const author = authorInput.value.trim() || 'Unknown';
+
+        if (!text) return;
+
+        quoteHistory.unshift({ id: Date.now(), text: text, author: author, date: todayDateStr });
+        localStorage.setItem('hb_quote_history', JSON.stringify(quoteHistory));
+
+        textInput.value = '';
+        authorInput.value = '';
+
+        renderQuoteHistory();
+    }
+
+    function setActiveFromHistory(index) {
+        const selected = quoteHistory[index];
+        if (!selected) return;
+
+        activeQuote = { text: selected.text, author: selected.author };
+        localStorage.setItem('hb_active_quote', JSON.stringify(activeQuote));
+
+        renderQuoteDisplay();
+        renderQuoteHistory();
+    }
+
+    function deleteQuoteFromHistory(index) {
+        quoteHistory.splice(index, 1);
+        localStorage.setItem('hb_quote_history', JSON.stringify(quoteHistory));
+        renderQuoteHistory();
+    }
+
+    // KPI & Metrics Calculations
+    function calculateStreak(habitName) {
+        let streak = 0;
+        const today = new Date();
+        for (let i = 0; i < 60; i++) {
+            let d = new Date();
+            d.setDate(today.getDate() - i);
+            let dateStr = d.toISOString().split('T')[0];
+            let log = logs.find(l => l.date === dateStr && l.habit === habitName);
+            if (log && log.status === 'Done') {
+                streak++;
+            } else if (i === 0) {
+                continue;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
+
+    function updateKPIs() {
+        let totalChecksPossible = habits.length * 7;
+        let checkedCount = 0;
+        let maxStreak = 0;
+
+        habits.forEach(h => {
+            let s = calculateStreak(h);
+            if (s > maxStreak) maxStreak = s;
+            currentWeekDates.forEach(d => {
+                if (logs.some(l => l.date === d.dateStr && l.habit === h && l.status === 'Done')) {
+                    checkedCount++;
+                }
+            });
+        });
+
+        let rate = totalChecksPossible > 0 ? Math.round((checkedCount / totalChecksPossible) * 100) : 0;
+        document.getElementById('kpiHabitRate').textContent = `${rate}%`;
+        document.getElementById('kpiTopStreak').textContent = `${maxStreak} Days`;
+
+        let activeCount = todos.filter(t => t.status !== 'Completed').length;
+        document.getElementById('kpiActiveTasks').textContent = activeCount;
+        document.getElementById('kpiFocusMins').textContent = `${totalFocusMinsLogged}m`;
+    }
+
+    // Render Habit Table
+    function renderHabitTable() {
+        const headerRow = document.getElementById('tableHeaderRow');
+        headerRow.innerHTML = '<th class="p-3">Habit Name</th>';
+        currentWeekDates.forEach(d => {
+            headerRow.innerHTML += `<th class="p-3 text-center">${d.dayName}<br><span class="text-[10px] font-normal text-slate-400 dark:text-slate-500">${d.shortDate}</span></th>`;
+        });
+
+        const tbody = document.getElementById('tableBodyRows');
+        tbody.innerHTML = '';
+
+        habits.forEach(habit => {
+            const streak = calculateStreak(habit);
+            let streakBadge = streak > 1 ? `<span class="ml-2 text-[10px] bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50 font-semibold px-2 py-0.5 rounded-full">🔥 ${streak}d</span>` : '';
+            
+            let rowHtml = `<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/50"><td class="p-3 font-semibold text-slate-900 dark:text-slate-100 flex items-center">${habit} ${streakBadge}</td>`;
+            currentWeekDates.forEach(d => {
+                const isChecked = logs.some(l => l.date === d.dateStr && l.habit === habit && l.status === 'Done');
+                rowHtml += `
+                    <td class="p-3 text-center">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                               onchange="toggleHabitLog('${habit}', '${d.dateStr}', this.checked)"
+                               class="w-5 h-5 accent-indigo-600 rounded cursor-pointer">
+                    </td>
+                `;
+            });
+            rowHtml += `</tr>`;
+            tbody.innerHTML += rowHtml;
+        });
+    }
+
+    function renderHabitManager() {
+        const list = document.getElementById('habitManagerList');
+        list.innerHTML = '';
+        habits.forEach((h, index) => {
+            list.innerHTML += `
+                <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm">
+                    <span class="font-medium text-slate-800 dark:text-slate-200">${h}</span>
+                    <button onclick="removeHabit(${index})" class="text-xs text-rose-600 hover:text-rose-700 font-semibold bg-rose-50 dark:bg-rose-950/50 px-3 py-1 rounded-lg border border-rose-200/40 dark:border-rose-800/40">
+                        Delete
+                    </button>
+                </div>
+            `;
+        });
+    }
+
+    function toggleHabitLog(habit, dateStr, isChecked) {
+        // Correctly sets status to 'Done' when checked, or 'Missed' when unchecked
         const status = isChecked ? 'Done' : 'Missed';
         updateSyncBadge('● Saving...');
 
@@ -9,7 +724,6 @@ function toggleHabitLog(habit, dateStr, isChecked) {
         } else {
             logs.push({ date: dateStr, habit: habit, status: status });
         }
-        
         localStorage.setItem('hb_logs', JSON.stringify(logs));
         renderHabitTable();
         updateKPIs();
@@ -24,3 +738,259 @@ function toggleHabitLog(habit, dateStr, isChecked) {
         .then(() => updateSyncBadge('● Synced'))
         .catch(() => updateSyncBadge('● Offline', true));
     }
+
+    function addHabit() {
+        const input = document.getElementById('newHabitInput');
+        const val = input.value.trim();
+        if (!val) return;
+
+        habits.push(val);
+        input.value = '';
+        localStorage.setItem('hb_habits', JSON.stringify(habits));
+        renderUI();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateHabits', habits: habits })
+        });
+    }
+
+    function removeHabit(index) {
+        habits.splice(index, 1);
+        localStorage.setItem('hb_habits', JSON.stringify(habits));
+        renderUI();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateHabits', habits: habits })
+        });
+    }
+
+    // Render To-Do Tasks
+    function renderTodos() {
+        const activeContainer = document.getElementById('activeTodoList');
+        const completedContainer = document.getElementById('completedTodoList');
+        activeContainer.innerHTML = '';
+        completedContainer.innerHTML = '';
+
+        let completedCount = 0;
+
+        todos.forEach(todo => {
+            const isCompleted = todo.status === 'Completed';
+            const priorityBadge = todo.priority === 'High' ? `<span class="text-[10px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/80 border border-rose-200/50 dark:border-rose-800/50 px-1.5 py-0.5 rounded-md">🔥 High</span>` : '';
+            const dueBadge = todo.dueDate ? `<span class="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">📅 ${todo.dueDate}</span>` : '';
+
+            const itemHtml = `
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs gap-2">
+                    <div class="flex items-center space-x-2.5 flex-1 min-w-0">
+                        <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTodo(${todo.id}, this.checked)" class="w-4 h-4 accent-indigo-600 rounded cursor-pointer shrink-0">
+                        <span class="${isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-200'} font-medium truncate">${todo.task}</span>
+                        ${priorityBadge}
+                        ${dueBadge}
+                    </div>
+                    <button onclick="deleteTodo(${todo.id})" class="text-[11px] text-rose-600 hover:text-rose-700 font-semibold shrink-0">Delete</button>
+                </div>
+            `;
+
+            if (isCompleted) {
+                completedCount++;
+                completedContainer.innerHTML += itemHtml;
+            } else {
+                activeContainer.innerHTML += itemHtml;
+            }
+        });
+
+        if (activeContainer.innerHTML === '') {
+            activeContainer.innerHTML = `<p class="text-xs text-slate-400 dark:text-slate-500 text-center py-3 italic">No active tasks right now. Add one above!</p>`;
+        }
+        document.getElementById('completedTodoCount').textContent = completedCount;
+    }
+
+    function addTodo() {
+        const taskInput = document.getElementById('todoTaskInput');
+        const dateInput = document.getElementById('todoDateInput');
+        const priorityInput = document.getElementById('todoPriorityInput');
+
+        const task = taskInput.value.trim();
+        if (!task) return;
+
+        const newTodo = {
+            id: Date.now(),
+            task: task,
+            dueDate: dateInput.value,
+            priority: priorityInput.value,
+            status: 'Pending'
+        };
+
+        todos.push(newTodo);
+        taskInput.value = '';
+        dateInput.value = '';
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+        updateKPIs();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'addTodo', task: task, dueDate: newTodo.dueDate, priority: newTodo.priority })
+        });
+    }
+
+    function toggleTodo(id, isChecked) {
+        const status = isChecked ? 'Completed' : 'Pending';
+        const todo = todos.find(t => t.id === id);
+        if (todo) todo.status = status;
+
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+        updateKPIs();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateTodoStatus', id: id, status: status })
+        });
+    }
+
+    function deleteTodo(id) {
+        todos = todos.filter(t => t.id !== id);
+        localStorage.setItem('hb_todos', JSON.stringify(todos));
+        renderTodos();
+        updateKPIs();
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'deleteTodo', id: id })
+        });
+    }
+
+    // Pomodoro Timer Logic
+    function setTimerMode(mode, minutes) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        document.getElementById('timerToggleBtn').textContent = 'Start Session';
+        
+        timerInitialSeconds = minutes * 60;
+        timerSecondsLeft = timerInitialSeconds;
+
+        document.querySelectorAll('#mode-focus, #mode-short, #mode-long').forEach(b => {
+            b.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-900 dark:hover:text-slate-200";
+        });
+
+        if (mode === 'focus') document.getElementById('mode-focus').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white";
+        if (mode === 'shortBreak') document.getElementById('mode-short').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-700 text-white";
+        if (mode === 'longBreak') document.getElementById('mode-long').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-600 text-white";
+
+        updateTimerDisplay();
+    }
+
+    function toggleTimer() {
+        const btn = document.getElementById('timerToggleBtn');
+        if (isTimerRunning) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.textContent = 'Resume';
+        } else {
+            isTimerRunning = true;
+            btn.textContent = 'Pause';
+            timerInterval = setInterval(() => {
+                if (timerSecondsLeft > 0) {
+                    timerSecondsLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    isTimerRunning = false;
+                    btn.textContent = 'Start Session';
+                    completedSessions++;
+                    totalFocusMinsLogged += Math.round(timerInitialSeconds / 60);
+                    document.getElementById('completedSessionsCount').textContent = completedSessions;
+                    document.getElementById('totalFocusMinutesLog').textContent = totalFocusMinsLogged;
+                    updateKPIs();
+                    alert('🎉 Focus session completed! Great work.');
+                }
+            }, 1000);
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        timerSecondsLeft = timerInitialSeconds;
+        document.getElementById('timerToggleBtn').textContent = 'Start Session';
+        updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+        let mins = Math.floor(timerSecondsLeft / 60);
+        let secs = timerSecondsLeft % 60;
+        document.getElementById('timerClock').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Journal & Reflection Logic
+    function autoSaveJournal() {
+        const val = document.getElementById('journalArea').value;
+        localStorage.setItem(`hb_journal_${todayDateStr}`, val);
+    }
+
+    function setMood(emoji) {
+        document.getElementById('selectedMoodDisplay').textContent = emoji;
+        localStorage.setItem(`hb_mood_${todayDateStr}`, emoji);
+    }
+
+    // Chart.js Visualizations
+    function renderCharts() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+        const habitCounts = currentWeekDates.map(d => {
+            return logs.filter(l => l.date === d.dateStr && l.status === 'Done').length;
+        });
+
+        const ctxHabit = document.getElementById('habitChart').getContext('2d');
+        if (habitChartInstance) habitChartInstance.destroy();
+
+        habitChartInstance = new Chart(ctxHabit, {
+            type: 'line',
+            data: {
+                labels: currentWeekDates.map(d => d.dayName),
+                datasets: [{
+                    label: 'Habits Completed',
+                    data: habitCounts,
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.15)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#4f46e5'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                    y: { ticks: { color: textColor, precision: 0 }, grid: { color: gridColor }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Initialize Application
+    initTheme();
+    setupWeekWindow();
+    fetchData();
+</script>
+
+</body>
+</html>
